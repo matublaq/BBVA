@@ -16,6 +16,7 @@ def create_database():
 
     cursor.execute("PRAGMA foreign_keys = ON")
 
+
     #Create a UUAA table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS UUAA (
@@ -24,63 +25,83 @@ def create_database():
         )
     ''')
 
-    #Create a Geofraphy table
+    #Create a Geography table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Geography (
-            geography VARCHAR(50) PRIMARY KEY,
-            DESCRIPTION VARCHAR(255)
+            geography_id INTEGER PRIMARY KEY,
+            geography VARCHAR(64), 
+            description VARCHAR(255)
         )
     ''')
 
 
-    #Create a Versions table
+    #Create a Power_Design table
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Versions (
+        CREATE TABLE IF NOT EXISTS Power_Design (
+            combined_uuaa_geo_dema varchar(255) PRIMARY KEY,
             UUAA VARCHAR(4) NOT NULL,
             Geography_id INTEGER NOT NULL,
-            version_id INTEGER NOT NULL,
-            version integer NOT NULL,
-            date date NOT NULL,
-            description varchar(50) NOT NULL,
-            PRIMARY KEY (version_id),
+            dev_master CHECK(dev_master IN ('Dev', 'Master')) NOT NULL,
+            version INTEGER NOT NULL,
+            date DATE NOT NULL,
+            description VARCHAR(255) NOT NULL,
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
-            FOREIGN KEY (geography) REFERENCES geography(geography), 
-            INDEX (UUAA, geography)
+            FOREIGN KEY (geography_id) REFERENCES Geography(geography_id), 
+            INDEX (UUAA, Geography_id, dev_master)
         )
     ''')
+    # Create a trigger to update combined_uuaa_geo_dema
+    CREATE TRIGGER IF NOT EXISTS update_combined_uuaa_geo_dema 
+    AFTER INSERT ON Power_Design 
+    FOR each ROW 
+    BEGIN
+        SET combined_uuaa_geo_dema = NEW.UUAA || '-' || NEW.Geography_id || '-' || NEW.dev_master 
+        WHERE UUAA = NEW.UUAA AND Geography_id = NEW.Geography_id AND dev_master = NEW.dev_master; 
+    END;
+    
+    CREATE TRIGGER IF NOT EXISTS update_combined_uuaa_geo_dema_on_update
+    AFTER UPDATE OF UUAA, geography_id, dev_master ON Power_Design
+    FOR EACH ROW
+    BEGIN
+        UPDATE Power_Design
+        SET combined_uuaa_geo_dema = NEW.UUAA || '-' || NEW.geography_id || '-' || NEW.dev_master
+        WHERE UUAA = NEW.UUAA AND geography_id = NEW.geography_id AND dev_master = NEW.dev_master;
+    END;
 
     # Create a petición table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Peticion (
-            petition_code VARCHAR(12) PRIMARY KEY,
-            DQDP_code VARCHAR(12) NOT NULL,
-            sdatool VARCHAR(12) NOT NULL,
-            feature VARCHAR(12) NOT NULL,
+            petition_code VARCHAR(64) PRIMARY KEY,
+            DQDP_code VARCHAR(64) NOT NULL,
+            sdatool VARCHAR(64) NOT NULL,
+            feature VARCHAR(64) NOT NULL,
             UUAA VARCHAR(4) NOT NULL,
-            geography VARCHAR(50) NOT NULL,
+            geography_id INTEGER NOT NULL,
+            petition_arq VARCHAR(64) NOT NULL,
             estado CHECK(estado IN ('Pendiente', 'En Proceso', 'Finalizado')) NOT NULL,
-            fecha date NOT NULL,
-            descripcion varchar(50) NOT NULL,
+            fecha_in DATE NOT NULL,
+            fecha_out DATE NOT NULL,
+            time_duration TIME NOT NULL, 
+            descripcion varchar(255) NOT NULL,
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA), 
-            FOREIGN KEY (geography) REFERENCES geography(geography)
+            FOREIGN KEY (geography_id) REFERENCES Geography(geography_id)
         )
     ''')
 
-    # Create a Peticion_version table
+    # Create a Peticion_PowerDesign table
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Peticion_version (
-            petition_code VARCHAR(12) NOT NULL,
-            version_id INTEGER NOT NULL,
-            PRIMARY KEY (petition_code, version_id),
-            FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code),
-            FOREIGN KEY (version_id) REFERENCES Versions(version_id), 
+        CREATE TABLE IF NOT EXISTS Peticion_PWD (
+            petition_code VARCHAR(64) NOT NULL,
+            combined_uuaa_geo_dema VARCHAR(255) NOT NULL,
+            PRIMARY KEY (petition_code, combined_uuaa_geo_dema),
+            FOREIGN KEY (combined_uuaa_geo_dema) REFERENCES Power_Design(combined_uuaa_geo_dema)
         )
     ''')
 
     conn.commit()
     conn.close()
 
-    def insert_data(petition_form)
+    def insert_data(petition_form):
         conn = sqlite3.connect("BBVA.db")
         cursor = conn.cursor()
 
