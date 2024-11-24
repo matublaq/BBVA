@@ -29,7 +29,7 @@ def create_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Geography (
             geography_id INTEGER PRIMARY KEY,
-            geography VARCHAR(64), 
+            geography VARCHAR(64) NOT NULL, 
             description VARCHAR(255)
         )
     ''')
@@ -38,35 +38,17 @@ def create_database():
     #Create a Power_Design table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Power_Design (
-            combined_uuaa_geo_dema varchar(255) PRIMARY KEY,
             UUAA VARCHAR(4) NOT NULL,
             Geography_id INTEGER NOT NULL,
-            dev_master CHECK(dev_master IN ('Dev', 'Master')) NOT NULL,
+            dev_master CHECK(dev_master IN ('Dev', 'Master', 'None')) NOT NULL,
             version INTEGER NOT NULL,
             date DATE NOT NULL,
-            description VARCHAR(255) NOT NULL,
+            description VARCHAR(255),
+            PRIMARY KEY (UUAA, Geography_id, dev_master),
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
-            FOREIGN KEY (geography_id) REFERENCES Geography(geography_id), 
-            INDEX (UUAA, Geography_id, dev_master)
+            FOREIGN KEY (geography_id) REFERENCES Geography(geography_id)
         )
     ''')
-    # Create a trigger to update combined_uuaa_geo_dema
-    CREATE TRIGGER IF NOT EXISTS update_combined_uuaa_geo_dema 
-    AFTER INSERT ON Power_Design 
-    FOR each ROW 
-    BEGIN
-        SET combined_uuaa_geo_dema = NEW.UUAA || '-' || NEW.Geography_id || '-' || NEW.dev_master 
-        WHERE UUAA = NEW.UUAA AND Geography_id = NEW.Geography_id AND dev_master = NEW.dev_master; 
-    END;
-    
-    CREATE TRIGGER IF NOT EXISTS update_combined_uuaa_geo_dema_on_update
-    AFTER UPDATE OF UUAA, geography_id, dev_master ON Power_Design
-    FOR EACH ROW
-    BEGIN
-        UPDATE Power_Design
-        SET combined_uuaa_geo_dema = NEW.UUAA || '-' || NEW.geography_id || '-' || NEW.dev_master
-        WHERE UUAA = NEW.UUAA AND geography_id = NEW.geography_id AND dev_master = NEW.dev_master;
-    END;
 
     # Create a petición table
     cursor.execute('''
@@ -80,7 +62,7 @@ def create_database():
             petition_arq VARCHAR(64) NOT NULL,
             estado CHECK(estado IN ('Pendiente', 'En Proceso', 'Finalizado')) NOT NULL,
             fecha_in DATE NOT NULL,
-            fecha_out DATE NOT NULL,
+            fecha_out DATE,
             time_duration TIME NOT NULL, 
             descripcion varchar(255) NOT NULL,
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA), 
@@ -92,26 +74,60 @@ def create_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Peticion_PWD (
             petition_code VARCHAR(64) NOT NULL,
-            combined_uuaa_geo_dema VARCHAR(255) NOT NULL,
-            PRIMARY KEY (petition_code, combined_uuaa_geo_dema),
-            FOREIGN KEY (combined_uuaa_geo_dema) REFERENCES Power_Design(combined_uuaa_geo_dema)
+            UUAA VARCHAR(4) NOT NULL,
+            Geography_id INTEGER NOT NULL,
+            dev_master CHECK(dev_master IN ('Dev', 'Master', 'None')) NOT NULL,
+            version_id VARCHAR(50) NOT NULL,
+            PRIMARY KEY (petition_code, UUAA, Geography_id, dev_master),
+            FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code),
+            FOREIGN KEY (UUAA, Geography_id, dev_master) REFERENCES Power_Design(UUAA, Geography_id, dev_master), 
+            FOREIGN KEY (version_id) REFERENCES Versions(version_id)
         )
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Versions (
+            version_id VARCHAR(50) PRIMARY KEY,
+            version INTEGER NOT NULL,
+            date DATE NOT NULL,
+            description VARCHAR(255),
+            FOREIGN KEY (version) REFERENCES Power_Design(version)
+            )
+    ''') #version_id = Power_Design(UUAA + Geography_id + dev_master + version)
 
     conn.commit()
     conn.close()
 
-    def insert_data(petition_form):
-        conn = sqlite3.connect("BBVA.db")
-        cursor = conn.cursor()
+def delete_database_tables():
+    conn = sqlite3.connect("BBVA.db")
+    cursor = conn.cursor()
 
-        #if UUAA and geography already exists? 
-        if not petition_from['UUAA'] in cursor.execute("SELECT UUAA FROM UUAA").fetchall():
-            cursor.execute("INSERT INTO UUAA (UUAA, description) VALUES (?, ?)", (petition_form['UUAA']))
-        if not petition_form['Geography'] in cursor.execute("SELECT geography FROM Geography").fetchall():
-            cursor.execute("INSERT INTO Geography (geography) VALUES (?)", (petition_form['Geography']))
+    cursor.execute("DROP TABLE IF EXISTS UUAA")
+    cursor.execute("DROP TABLE IF EXISTS Geography")
+    cursor.execute("DROP TABLE IF EXISTS Power_Design")
+    cursor.execute("DROP TABLE IF EXISTS Peticion")
+    cursor.execute("DROP TABLE IF EXISTS Peticion_PWD")
+    cursor.execute("DROP TABLE IF EXISTS Versions")
+
+    conn.commit()
+    conn.close()
 
 
+# Petition form: [petition_code, DQDP_code, sdatool, feature, UUAA, geography, petition_arq, estado, fecha_in, fecha_out, time_duration, descripcion]
+def insert_data(petition_form):
+    conn = sqlite3.connect("BBVA.db")
+    cursor = conn.cursor()
 
-        conn.commit()
-        conn.close()
+    #Insert data into Peticion table
+    cursor.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, UUAA, geography_id, petition_arq, estado, fecha_in, fecha_out, time_duration, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_form['petition_code'], petition_form['DQDP_code'], petition_form['sdatool'], petition_form['feature'], petition_form['UUAA'], petition_form['Geography'], petition_form['petition_arq'], petition_form['estado'], petition_form['fecha_in'], petition_form['fecha_out'], petition_form['time_duration'], petition_form['descripcion']))
+    
+    #if UUAA and geography already exists? 
+    # Insert data into UUAA and Geography tables
+    if not petition_from['UUAA'] in cursor.execute("SELECT UUAA FROM UUAA").fetchall():
+        cursor.execute("INSERT INTO UUAA (UUAA, description) VALUES (?, ?)", (petition_form['UUAA']))
+    if not petition_form['Geography'] in cursor.execute("SELECT geography FROM Geography").fetchall():
+        cursor.execute("INSERT INTO Geography (geography, description) VALUES (?, ?)", (petition_form['Geography']))
+
+
+    conn.commit()
+    conn.close()
