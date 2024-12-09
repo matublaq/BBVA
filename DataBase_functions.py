@@ -16,7 +16,7 @@ import subprocess
 
 #############################################################################################################################
 ############################################### SQLITE3 #####################################################################
-def create_databas_sqlite3():
+def create_database_sqlite3():
     # Connect/Create a database
     conn = sqlite3.connect("BBVA.db")
     cursor = conn.cursor()
@@ -87,8 +87,7 @@ def create_databas_sqlite3():
             version INTEGER NOT NULL,
             PRIMARY KEY (petition_code, UUAA, Geography_id, dev_master),
             FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code),
-            FOREIGN KEY (UUAA, Geography_id, dev_master) REFERENCES Power_Design(UUAA, Geography_id, dev_master), 
-            FOREIGN KEY (version_id) REFERENCES Versions(version_id)
+            FOREIGN KEY (UUAA, Geography_id, dev_master) REFERENCES Power_Design(UUAA, Geography_id, dev_master)
         )
     ''')
 
@@ -118,13 +117,17 @@ def insert_data_sqlite3(petition_form):
     #Insert data into Peticion table
     cursor.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, UUAA, geography_id, petition_arq, estado, fecha_in, fecha_out, time_duration, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_form['petition_code'], petition_form['DQDP_code'], petition_form['sdatool'], petition_form['feature'], petition_form['UUAA'], petition_form['Geography'], petition_form['petition_arq'], petition_form['estado'], petition_form['fecha_in'], petition_form['fecha_out'], petition_form['time_duration'], petition_form['descripcion']))
     
-    #if UUAA and geography already exists? 
-    # Insert data into UUAA and Geography tables
-    if not petition_from['UUAA'] in cursor.execute("SELECT UUAA FROM UUAA").fetchall():
+    #If UUAA and geography already exists? Insert data into UUAA and Geography tables
+    if not petition_form['UUAA'] in cursor.execute("SELECT UUAA FROM UUAA").fetchall():
         cursor.execute("INSERT INTO UUAA (UUAA, description) VALUES (?, ?)", (petition_form['UUAA']))
     if not petition_form['Geography'] in cursor.execute("SELECT geography FROM Geography").fetchall():
         cursor.execute("INSERT INTO Geography (geography, description) VALUES (?, ?)", (petition_form['Geography']))
+    #If petition_code, UUAA, geography_id, dev_master already exists? Insert data into Peticion_PWD table
+    if not [petition_form['petition_code'], petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master']] in cursor.execute("SELECT petition_code, UUAA, geography_id, dev_master FROM Peticion_PWD").fetchall():
+        cursor.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography_id, dev_master, version) VALUES (?, ?, ?, ?, ?)", (petition_form['petition_code'], petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version']))
 
+    if not [petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master']] in cursor.execute("SELECT UUAA, geography_id, dev_master FROM Power_Design").fetchall():
+        cursor.execute("INSERT INTO Power_Design (UUAA, geography_id, dev_master, version, date, description) VALUES (?, ?, ?, ?, ?, ?)", (petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'], petition_form['date'], petition_form['description']))
 
     conn.commit()
     conn.close()
