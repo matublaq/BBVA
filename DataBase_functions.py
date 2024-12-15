@@ -92,6 +92,7 @@ def create_database_sqlite3():
     ''')
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 def delete_database_tables_sqlite3():
@@ -106,6 +107,7 @@ def delete_database_tables_sqlite3():
     cursor.execute("DROP TABLE IF EXISTS Versions")
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 
@@ -130,6 +132,7 @@ def insert_data_sqlite3(petition_form):
         cursor.execute("INSERT INTO Power_Design (UUAA, geography_id, dev_master, version, date, description) VALUES (?, ?, ?, ?, ?, ?)", (petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'], petition_form['date'], petition_form['description']))
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 
@@ -215,9 +218,10 @@ def create_database_postgresql():
     ''')
 
     conn.commit()
+    cursor.close()
     conn.close()
 
-def delete_database_tables_postgresql():
+def delete_tables_postgresql():
     conn = psycopg2.connect(
         dbname = "pwd_control", 
         user = "postgres",
@@ -236,4 +240,113 @@ def delete_database_tables_postgresql():
     cursor.execute("DROP TABLE IF EXISTS Versions")
 
     conn.commit()
+    cursor.close()
+    conn.close()
+
+#########################################################################################################################
+############################################### RENDER ##################################################################
+
+def create_database_render():
+    # Connect/Create a database
+    conn = psycopg2.connect(
+        dbname = "pwd_control_plnk", 
+        user = "matublaq",
+        password = "SF19KOpSPMl8Ru51ONQ33AHOf0RuZnne", 
+        host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
+        port = "5432"
+    )
+    cursor = conn.cursor()
+    cursor.execute("SELECT version()")
+    version = cursor.fetchone()
+    print("PostgreSQL version: ", version)
+
+    # Crear la tabla UUAA
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS UUAA (
+            UUAA VARCHAR(4) PRIMARY KEY,
+            description VARCHAR(255)
+        );
+    ''')
+
+    # Crear la tabla Geography
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Geography (
+            geography_id SERIAL PRIMARY KEY,
+            geography VARCHAR(64) NOT NULL, 
+            description VARCHAR(255)
+        );
+    ''')
+
+    # Crear la tabla Power_Design
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Power_Design (
+            UUAA VARCHAR(4) NOT NULL,
+            geography_id INTEGER NOT NULL,
+            dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
+            version INTEGER NOT NULL,
+            date DATE NOT NULL,
+            description VARCHAR(255),
+            PRIMARY KEY (UUAA, geography_id, dev_master),
+            FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
+            FOREIGN KEY (geography_id) REFERENCES Geography(geography_id)
+        );
+    ''')
+
+    # Crear la tabla Peticion
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Peticion (
+            petition_code VARCHAR(64) PRIMARY KEY,
+            DQDP_code VARCHAR(64) NOT NULL,
+            sdatool VARCHAR(64) NOT NULL,
+            feature VARCHAR(64) NOT NULL,
+            UUAA VARCHAR(4) NOT NULL,
+            geography_id INTEGER NOT NULL,
+            petition_arq VARCHAR(64) NOT NULL,
+            estado VARCHAR(20) NOT NULL CHECK (estado IN ('Pendiente', 'En Proceso', 'Finalizado')),
+            fecha_in DATE NOT NULL,
+            fecha_out DATE,
+            time_duration TIME NOT NULL, 
+            descripcion VARCHAR(255) NOT NULL,
+            FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA), 
+            FOREIGN KEY (geography_id) REFERENCES Geography(geography_id)
+        );
+    ''')
+
+    # Crear la tabla Peticion_PWD con una clave primaria compuesta
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Peticion_PWD (
+            petition_code VARCHAR(64) NOT NULL,
+            UUAA VARCHAR(4) NOT NULL,
+            geography_id INTEGER NOT NULL,
+            dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
+            version INTEGER NOT NULL,
+            PRIMARY KEY (petition_code, UUAA, geography_id, dev_master),
+            FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code),
+            FOREIGN KEY (UUAA, geography_id, dev_master) REFERENCES Power_Design(UUAA, geography_id, dev_master)
+        );
+    ''')
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def delete_tables_render():
+    conn = psycopg2.connect(
+        dbname = "pwd_control_plnk", 
+        user = "matublaq",
+        password = "SF19KOpSPMl8Ru51ONQ33AHOf0RuZnne", 
+        host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
+        port = "5432"
+    )
+    cursor = conn.cursor()
+
+    cursor.execute("DROP TABLE IF EXISTS UUAA CASCADE;")
+    cursor.execute("DROP TABLE IF EXISTS Geography CASCADE;")
+    cursor.execute("DROP TABLE IF EXISTS Power_Design CASCADE;")
+    cursor.execute("DROP TABLE IF EXISTS Peticion CASCADE;")
+    cursor.execute("DROP TABLE IF EXISTS Peticion_PWD CASCADE;")
+    cursor.execute("DROP TABLE IF EXISTS Versions CASCADE;")
+
+    conn.commit()
+    cursor.close()
     conn.close()
