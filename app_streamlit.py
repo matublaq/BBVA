@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import streamlit.components.v1 as components
+from DataBase_functions import *
+
 
 # Page configuration
 st.set_page_config(layout="wide")
@@ -46,13 +48,13 @@ with st.form(key='petition_form'):
             time_duration = st.slider('Time Duration', min_value=0.0, max_value=20.0, step=0.5, value=1.0)
         
     with col2:
-        petition_code = st.text_input('Petition Code')
+        DQDP_code = st.text_input('DQDP Code')
         col2_1, col2_2 = st.columns(2)
         with col2_1: 
             sdatool = st.text_input('SDA Tool')
         with col2_2:
             feature = st.text_input('Feature')
-        DQDP_code = st.text_input('DQDP Code')
+        petition_code = st.text_input('Petition Code')
         petition_arq = st.text_input('Petition ARQ')
         
         
@@ -76,3 +78,20 @@ if submit_button:
     st.write('Fecha Out:', fecha_out)
     st.write('Time Duration:', time_duration)
     st.write('Descripción:', descripcion)
+
+    petition_form = {
+        'petition_code': petition_code,
+        'DQDP_code': DQDP_code,
+        'sdatool': sdatool,
+        'feature': feature,
+        'UUAA': UUAA,
+        'geography_id': geography_id,
+        'petition_arq': petition_arq,
+        'estado': estado,
+        'fecha_in': fecha_in,
+        'fecha_out': fecha_out,
+        'time_duration': time_duration,
+        'descripcion': descripcion
+    }
+
+    #insert_data(petition_form)
