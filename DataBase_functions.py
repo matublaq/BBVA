@@ -45,6 +45,25 @@ def create_database():
     cursor3 = conn3.cursor()	
     ################################################################################
 
+    # Crear la tabla Peticion
+    query = '''
+        CREATE TABLE IF NOT EXISTS Peticion (
+            petition_code VARCHAR(64) PRIMARY KEY,
+            DQDP_code VARCHAR(64) NOT NULL,
+            sdatool VARCHAR(64) NOT NULL,
+            feature VARCHAR(64) NOT NULL,
+            petition_arq VARCHAR(64) NOT NULL,
+            estado VARCHAR(20) NOT NULL CHECK (estado IN ('Pendiente', 'En Proceso', 'Finalizado')),
+            fecha_in DATE NOT NULL,
+            fecha_out DATE NOT NULL,
+            duration_time NUMERIC(4, 2) NOT NULL, 
+            description VARCHAR(255) NOT NULL
+        );
+    '''
+    cursor1.execute(query)
+    #cursor2.execute(query)
+    cursor3.execute(query)
+    
     #Create a UUAA table
     query = '''
         CREATE TABLE IF NOT EXISTS UUAA (
@@ -67,58 +86,53 @@ def create_database():
     #cursor2.execute(query)
     cursor3.execute(query)
 
+    # Crear la tabla DDBB
+    query = '''
+        CREATE TABLE IF NOT EXISTS DDBB (
+            DDBB VARCHAR(32) PRIMARY KEY,
+            description VARCHAR(255)
+        );
+    '''
+    cursor1.execute(query)
+    #cursor2.execute(query)
+    cursor3.execute(query)
+
     # Crear la tabla Power_Design
     query = '''
         CREATE TABLE IF NOT EXISTS Power_Design (
             UUAA VARCHAR(4) NOT NULL,
             geography VARCHAR(32) NOT NULL,
+            DDBB VARCHAR(32) NOT NULL,
             dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
-            version INTEGER NOT NULL,
+            version VARCHAR(64) NOT NULL,
             date DATE NOT NULL,
             description VARCHAR(255),
-            PRIMARY KEY (UUAA, geography, dev_master),
+            PRIMARY KEY (UUAA, geography, dev_master, DDBB),
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
-            FOREIGN KEY (geography) REFERENCES Geography(geography)
+            FOREIGN KEY (geography) REFERENCES Geography(geography), 
+            FOREIGN KEY (DDBB) REFERENCES DDBB(DDBB)
         );
     '''
     cursor1.execute(query)
     #cursor2.execute(query)
     cursor3.execute(query)
 
-    # Crear la tabla Peticion
-    query = '''
-        CREATE TABLE IF NOT EXISTS Peticion (
-            petition_code VARCHAR(64) PRIMARY KEY,
-            DQDP_code VARCHAR(64) NOT NULL,
-            sdatool VARCHAR(64) NOT NULL,
-            feature VARCHAR(64) NOT NULL,
-            UUAA VARCHAR(4) NOT NULL,
-            geography VARCHAR(32) NOT NULL,
-            petition_arq VARCHAR(64) NOT NULL,
-            estado VARCHAR(20) NOT NULL CHECK (estado IN ('Pendiente', 'En Proceso', 'Finalizado')),
-            fecha_in DATE NOT NULL,
-            fecha_out DATE,
-            time_duration TIME NOT NULL, 
-            descripcion VARCHAR(255) NOT NULL,
-            FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA), 
-            FOREIGN KEY (geography) REFERENCES Geography(geography)
-        );
-    '''
-    cursor1.execute(query)
-    #cursor2.execute(query)
-    cursor3.execute(query)
-
-    # Crear la tabla Peticion_PWD con una clave primaria compuesta
+    # Crear la tabla Peticion_PWD 
     query = '''
         CREATE TABLE IF NOT EXISTS Peticion_PWD (
             petition_code VARCHAR(64) NOT NULL,
             UUAA VARCHAR(4) NOT NULL,
             geography VARCHAR(32) NOT NULL,
+            DDBB VARCHAR(32) NOT NULL,
             dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
-            version INTEGER NOT NULL,
-            PRIMARY KEY (petition_code, UUAA, geography, dev_master),
-            FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code),
-            FOREIGN KEY (UUAA, geography, dev_master) REFERENCES Power_Design(UUAA, geography, dev_master)
+            version VARCHAR(64) NOT NULL,
+            description VARCHAR(255),
+            PRIMARY KEY (petition_code, UUAA, geography, DDBB, dev_master),
+            FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code), 
+            FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
+            FOREIGN KEY (geography) REFERENCES Geography(geography), 
+            FOREIGN KEY (DDBB) REFERENCES DDBB(DDBB), 
+            FOREIGN KEY (UUAA, geography, DDBB, dev_master) REFERENCES Power_Design(UUAA, geography, DDBB, dev_master)
         );
     '''
     cursor1.execute(query)
@@ -166,16 +180,16 @@ def drop_tables():
     cursor3 = conn3.cursor()	
     ################################################################################
 
-    tables = ["UUAA", "Geography", "Power_Design", "Peticion", "Peticion_PWD", "Versions"]
+    tables = ["Peticion_PWD", "Power_Design", "DDBB", "Geography", "UUAA", "Peticion"]
     for table in tables:
         cursor1.execute(f"DROP TABLE IF EXISTS {table}")
     query = '''
-        DROP TABLE IF EXISTS UUAA CASCADE;
-        DROP TABLE IF EXISTS Geography CASCADE;
-        DROP TABLE IF EXISTS Power_Design CASCADE;
-        DROP TABLE IF EXISTS Peticion CASCADE;
         DROP TABLE IF EXISTS Peticion_PWD CASCADE;
-        DROP TABLE IF EXISTS Versions CASCADE;
+        DROP TABLE IF EXISTS Power_Design CASCADE;
+        DROP TABLE IF EXISTS DDBB CASCADE;
+        DROP TABLE IF EXISTS Geography CASCADE;
+        DROP TABLE IF EXISTS UUAA CASCADE;
+        DROP TABLE IF EXISTS Peticion CASCADE;
     '''
     #cursor2.execute(query)
     cursor3.execute(query)
@@ -194,7 +208,7 @@ def drop_tables():
     conn3.close()
     ########################
 
-def insert_data(petition_form): 
+def insert_data(petition_info): 
     ################################################################################
     conn1 = sqlite3.connect("BBVA.db")
     cursor1 = conn1.cursor()
@@ -220,45 +234,107 @@ def insert_data(petition_form):
     )
     cursor3 = conn3.cursor()	
     ################################################################################
-    try: 
+    try:
+        ###########################################################################################################################
         #Insert data into Peticion table
-        query = "INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, UUAA, geography, petition_arq, estado, fecha_in, fecha_out, time_duration, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        params = (petition_form['petition_code'], petition_form['DQDP_code'], petition_form['sdatool'], petition_form['feature'], petition_form['UUAA'], petition_form['geography'], petition_form['petition_arq'], petition_form['estado'], petition_form['fecha_in'], petition_form['fecha_out'], petition_form['time_duration'], petition_form['descripcion'])
-        cursor1.execute(query, params)
-        #cursor2.execute(query)
-        cursor3.execute(query, params)
+        cursor1.execute("SELECT petition_code FROM Peticion")
+        petition_records = cursor1.fetchall()
+        if not petition_info['petition_code'] in [record[0] for record in petition_records]:
+            cursor1.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #SQLite3
 
+        #cursor2.execute("SELECT petition_code FROM Peticion")
+        #petition_records = cursor1.fetchall()
+        #if not petition_info['petition_code'] in [record[0] for record in petition_records]:
+        #    cursor2.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #PostgreSQL localhost
+
+        cursor3.execute("SELECT petition_code FROM Peticion")
+        petition_records = cursor3.fetchall()
+        if not petition_info['petition_code'] in [record[0] for record in petition_records]:
+            cursor3.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #PostgreSQL Render
+
+        ###########################################################################################################################
         #If UUAA  already exists? Insert data into UUAA table
-        if not petition_form['UUAA'] in cursor1.execute("SELECT UUAA FROM UUAA").fetchall():
-            cursor1.execute("INSERT INTO UUAA (UUAA) VALUES (?)", (petition_form['UUAA'])) #SQLite3
-        #if not petition_form['UUAA'] in cursor2.execute("SELECT UUAA FROM UUAA").fetchall():
-        #    cursor2.execute("INSERT INTO UUAA (UUAA) VALUES (?)", (petition_form['UUAA'])) #PostgreSQL localhost
-        if not petition_form['UUAA'] in cursor3.execute("SELECT UUAA FROM UUAA").fetchall():
-            cursor3.execute("INSERT INTO UUAA (UUAA) VALUES (?)", (petition_form['UUAA'])) #PostgreSQL Render
+        cursor1.execute("SELECT UUAA FROM UUAA")
+        uuaa_records = cursor1.fetchall()
+        if not petition_info['UUAA'] in [record[0] for record in uuaa_records]:
+            cursor1.execute("INSERT INTO UUAA (UUAA) VALUES (?)", (petition_info['UUAA'], )) #SQLite3
 
+        #cursor2.execute("SELECT UUAA FROM UUAA")
+        #uuaa_records = cursor2.fetchall()
+        #if not petition_form['UUAA'] in [record[0] for record in uuaa_records]:
+        #    cursor2.execute("INSERT INTO UUAA (UUAA) VALUES (%s)", (petition_info['UUAA'], )) #PostgreSQL localhost
+
+        cursor3.execute("SELECT UUAA FROM UUAA")
+        uuaa_records = cursor3.fetchall()
+        if not petition_info['UUAA'] in [record[0] for record in uuaa_records]:
+            cursor3.execute("INSERT INTO UUAA (UUAA) VALUES (%s)", (petition_info['UUAA'], )) #PostgreSQL Render
+
+        ###########################################################################################################################
         #If geography already exists? Insert data into Geography table
-        if not petition_form['geography'] in cursor1.execute("SELECT geography FROM Geography").fetchall():
-            cursor1.execute("INSERT INTO Geography (geography) VALUES (?)", (petition_form['geography'])) #SQLite3
-        #if not petition_form['Geography'] in cursor2.execute("SELECT geography FROM Geography").fetchall():
-        #    cursor2.execute("INSERT INTO Geography (geography) VALUES (?)", (petition_form['Geography'])) #PostgreSQL localhost
-        if not petition_form['geography'] in cursor3.execute("SELECT geography FROM Geography").fetchall():
-            cursor3.execute("INSERT INTO Geography (geography) VALUES (?)", (petition_form['geography'])) #PostgreSQL Render
+        cursor1.execute("SELECT geography FROM Geography")
+        geography_records = cursor1.fetchall()
+        if not petition_info['geography'] in [record[0] for record in geography_records]:
+            cursor1.execute("INSERT INTO Geography (geography) VALUES (?)", (petition_info['geography'], )) #SQLite3
 
-        #If petition_code, UUAA, geography_id, dev_master already exists? Insert data into Peticion_PWD table
-        if not [petition_form['petition_code'], petition_form['UUAA'], petition_form['geography'], petition_form['dev_master']] in cursor1.execute("SELECT petition_code, UUAA, geography, dev_master FROM Peticion_PWD").fetchall():
-            cursor1.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, dev_master, version) VALUES (?, ?, ?, ?, ?)", (petition_form['petition_code'], petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'])) #SQLite3
-        #if not [petition_form['petition_code'], petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master']] in cursor2.execute("SELECT petition_code, UUAA, geography, dev_master FROM Peticion_PWD").fetchall():
-        #    cursor2.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, dev_master, version) VALUES (?, ?, ?, ?, ?)", (petition_form['petition_code'], petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'])) #PostgreSQL localhost
-        if not [petition_form['petition_code'], petition_form['UUAA'], petition_form['geography'], petition_form['dev_master']] in cursor3.execute("SELECT petition_code, UUAA, geography, dev_master FROM Peticion_PWD").fetchall():
-            cursor3.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, dev_master, version) VALUES (?, ?, ?, ?, ?)", (petition_form['petition_code'], petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'])) #PostgreSQL Render
-        
+        #cursor2.execute("SELECT geography FROM Geography")
+        #geography_records = cursor2.fetchall()
+        #if not petition_form['geography'] in [record[0] for record in geography_records]:
+        #    cursor2.execute("INSERT INTO Geography (geography) VALUES (%s)", (petition_info['geography'], )) #PostgreSQL localhost
+
+        cursor3.execute("SELECT geography FROM Geography")
+        geography_records = cursor3.fetchall()
+        if not petition_info['geography'] in [record[0] for record in geography_records]:
+            cursor3.execute("INSERT INTO Geography (geography) VALUES (%s)", (petition_info['geography'], )) #PostgreSQL Render
+
+        ###########################################################################################################################
+        #If DDBB already exists? Insert data into DDBB table
+        cursor1.execute("SELECT DDBB FROM DDBB")
+        ddbb_records = cursor1.fetchall()
+        if not petition_info['DDBB'] in [record[0] for record in ddbb_records]:
+            cursor1.execute("INSERT INTO DDBB (DDBB) VALUES (?)", (petition_info['DDBB'], )) #SQLite3
+
+        #cursor2.execute("SELECT DDBB FROM DDBB")
+        #ddbb_records = cursor2.fetchall()
+        #if not petition_form['DDBB'] in [record[0] for record in ddbb_records]:
+        #    cursor2.execute("INSERT INTO DDBB (DDBB) VALUES (%s)", (petition_info['DDBB'], )) #PostgreSQL localhost
+
+        cursor3.execute("SELECT DDBB FROM DDBB")
+        ddbb_records = cursor3.fetchall()
+        if not petition_info['DDBB'] in [record[0] for record in ddbb_records]:
+            cursor3.execute("INSERT INTO DDBB (DDBB) VALUES (%s)", (petition_info['DDBB'], )) #PostgreSQL Render
+        ###########################################################################################################################      
         #If UUAA, geography_id, dev_master already exists? Insert data into Power_Design table
-        if not [petition_form['UUAA'], petition_form['geography'], petition_form['dev_master']] in cursor1.execute("SELECT UUAA, geography, dev_master FROM Power_Design").fetchall():
-            cursor1.execute("INSERT INTO Power_Design (UUAA, geography, dev_master, version, date, description) VALUES (?, ?, ?, ?, ?, ?)", (petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'], petition_form['date'], petition_form['description']))
-        #if not [petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master']] in cursor2.execute("SELECT UUAA, geography, dev_master FROM Power_Design").fetchall():
-        #    cursor2.execute("INSERT INTO Power_Design (UUAA, geography, dev_master, version, date, description) VALUES (?, ?, ?, ?, ?, ?)", (petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'], petition_form['date'], petition_form['description']))
-        if not [petition_form['UUAA'], petition_form['geography'], petition_form['dev_master']] in cursor3.execute("SELECT UUAA, geography, dev_master FROM Power_Design").fetchall():
-            cursor3.execute("INSERT INTO Power_Design (UUAA, geography, dev_master, version, date, description) VALUES (?, ?, ?, ?, ?, ?)", (petition_form['UUAA'], petition_form['Geography'], petition_form['dev_master'], petition_form['version'], petition_form['date'], petition_form['description']))
+        cursor1.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
+        pwd_records = cursor1.fetchall()
+        if not [petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master']] in [record[0] for record in pwd_records]:
+            cursor1.execute("INSERT INTO Power_Design (UUAA, geography, DDBB, dev_master, version, date, description) VALUES (?, ?, ?, ?, ?, ?, ?)", (petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['date'], petition_info['description'], )) #SQLite3
+
+        #cursor2.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
+        #pwd_records = cursor2.fetchall()
+        #if not [petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master']] in [record for record in pwd_records]:
+        #    cursor2.execute("INSERT INTO Power_Design (UUAA, geography, DDBB, dev_master, version, date, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['UUAA'], petition_info['Geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['date'], petition_info['description'], )) #PostgreSQL localhost
+
+        cursor3.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
+        pwd_records = cursor3.fetchall()
+        if not [petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master']] in [record[0] for record in pwd_records]:
+            cursor3.execute("INSERT INTO Power_Design (UUAA, geography, DDBB, dev_master, version, date, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['date'], petition_info['description'], )) #PostgreSQL Render
+
+        ###########################################################################################################################
+        #If petition_code, UUAA, geography_id, dev_master already exists? Insert data into Peticion_PWD table
+        cursor1.execute("SELECT petition_code, UUAA, geography, DDBB, dev_master FROM Peticion_PWD")
+        pwd_records = cursor1.fetchall()
+        if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
+            cursor1.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, DDBB, dev_master, version, description) VALUES (?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #SQLite3
+
+        #cursor2.execute("SELECT petition_code, UUAA, geography, DDBB, dev_master FROM Peticion_PWD")
+        #pwd_records = cursor2.fetchall()
+        #if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
+        #    cursor2.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, dev_master, version, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['Geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #PostgreSQL localhost
+
+        cursor3.execute("SELECT petition_code, UUAA, geography, DDBB, dev_master FROM Peticion_PWD")
+        pwd_records = cursor3.fetchall()
+        if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
+            cursor3.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, DDBB, dev_master, version, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #PostgreSQL Render
     
         #Confirm the transaction
         conn1.commit()
