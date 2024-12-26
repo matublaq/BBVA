@@ -1,0 +1,9 @@
+sqlite3
+nbformat
+psycopg2
+numpy
+pandas 
+time
+subprocess
+matplotlib
+streamlit
