@@ -5,5 +5,4 @@ numpy
 pandas 
 time
 subprocess
-matplotlib
 streamlit
