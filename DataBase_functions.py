@@ -23,6 +23,7 @@ def create_database():
     conn1 = sqlite3.connect("BBVA.db")
     cursor1 = conn1.cursor()
     cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
+
     ################################################################################
     '''
     conn2 =  psycopg2.connect(
@@ -34,6 +35,7 @@ def create_database():
     )
     cursor2 = conn2.cursor()
     '''
+
     ################################################################################
     conn3 =  psycopg2.connect(
         dbname = "pwd_control_plnk", 
@@ -43,8 +45,8 @@ def create_database():
         port = "5432"
     )
     cursor3 = conn3.cursor()	
-    ################################################################################
 
+    ################################################################################
     # Crear la tabla Peticion
     query = '''
         CREATE TABLE IF NOT EXISTS Peticion (
@@ -143,21 +145,23 @@ def create_database():
     conn1.commit()
     cursor1.close()
     conn1.close()
+
 ########################
     #conn2.commit()
     #cursor2.close()
     #conn2.close()
+
 ########################
     conn3.commit()
     cursor3.close()
     conn3.close()
-########################
 
 def drop_tables():
     ################################################################################
     conn1 = sqlite3.connect("BBVA.db")
     cursor1 = conn1.cursor()
     cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
+
     ################################################################################
     '''
     conn2 =  psycopg2.connect(
@@ -169,6 +173,7 @@ def drop_tables():
     )
     cursor2 = conn2.cursor()
     '''
+
     ################################################################################
     conn3 =  psycopg2.connect(
         dbname = "pwd_control_plnk", 
@@ -177,9 +182,9 @@ def drop_tables():
         host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
         port = "5432"
     )
-    cursor3 = conn3.cursor()	
-    ################################################################################
+    cursor3 = conn3.cursor()
 
+    ################################################################################
     tables = ["Peticion_PWD", "Power_Design", "DDBB", "Geography", "UUAA", "Peticion"]
     for table in tables:
         cursor1.execute(f"DROP TABLE IF EXISTS {table}")
@@ -198,21 +203,23 @@ def drop_tables():
     conn1.commit()
     cursor1.close()
     conn1.close()
+
     ########################
     #conn2.commit()
     #cursor2.close()
     #conn2.close()
+
     ########################
     conn3.commit()
     cursor3.close()
     conn3.close()
-    ########################
 
 def insert_data(petition_info): 
     ################################################################################
     conn1 = sqlite3.connect("BBVA.db")
     cursor1 = conn1.cursor()
     cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
+
     ################################################################################
     '''
     conn2 =  psycopg2.connect(
@@ -224,6 +231,7 @@ def insert_data(petition_info):
     )
     cursor2 = conn2.cursor()
     '''
+
     ################################################################################
     conn3 =  psycopg2.connect(
         dbname = "pwd_control_plnk", 
@@ -232,7 +240,30 @@ def insert_data(petition_info):
         host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
         port = "5432"
     )
-    cursor3 = conn3.cursor()	
+    cursor3 = conn3.cursor()
+
+    ################################################################################
+    #Data validation
+    petition_info["petition_code"] = petition_info["petition_code"].strip().upper()
+    petition_info["DQDP_code"] = petition_info["DQDP_code"].strip().upper()
+    petition_info["sdatool"] = petition_info["sdatool"].strip().upper()
+    petition_info["feature"] = petition_info["feature"].strip().upper()
+    petition_info["UUAA"] = petition_info["UUAA"].strip().upper()
+    #petition_info["geography"]
+    #petition_info["DDBB"]
+    #petition_info["dev_master"]
+    petition_info["version"] = petition_info["version"].strip()
+    petition_info["petition_arq"] = petition_info["petition_arq"].strip().upper()
+    #petition_info["estado"]
+    #petition_info["date"]
+    #petition_info["fecha_in"]
+    #petition_info["fecha_out"]
+    #petition_info["duration_time"]
+    petition_info["description"] = petition_info["description"].strip().capitalize()
+
+    for key, value in petition_info.items():
+        if value == "Nan" or value == None or value == "" or value == "None": 
+            petition_info[key] = None
     ################################################################################
     try:
         ###########################################################################################################################
@@ -302,6 +333,7 @@ def insert_data(petition_info):
         ddbb_records = cursor3.fetchall()
         if not petition_info['DDBB'] in [record[0] for record in ddbb_records]:
             cursor3.execute("INSERT INTO DDBB (DDBB) VALUES (%s)", (petition_info['DDBB'], )) #PostgreSQL Render
+
         ###########################################################################################################################      
         #If UUAA, geography_id, dev_master already exists? Insert data into Power_Design table
         cursor1.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
@@ -347,6 +379,7 @@ def insert_data(petition_info):
             cursor1.close()
         if conn1:
             conn1.close()
+
         ########################
         '''
         if cursor2:
@@ -354,9 +387,11 @@ def insert_data(petition_info):
         if conn2:
             conn2.close()
         '''
+
         ########################
         if cursor3:
             cursor3.close()
         if conn3:
             conn3.close()
+
         ########################

@@ -35,13 +35,13 @@ with st.form(key='petition_info'):
             petition_code = st.text_input('Petition Code (CHAR 64)')
             sdatool = st.text_input('SDA Tool (CHAR 64)')
             fecha_in = st.date_input('Fecha In')
-            timer_duration = st.number_input('Time Duration', min_value=0.5, max_value=20.0, step=0.5, value=1.0)
+            duration_time = st.number_input('Time Duration', min_value=0.5, max_value=20.0, step=0.5, value=1.0)
         with col1_2:
             DQDP_code = st.text_input('DQDP Code (CHAR 64)')
             petition_arq = st.text_input('Petition ARQ (CHAR 64)')
             feature = st.text_input('Feature (CHAR 64)')
             fecha_out = st.date_input('Fecha Out')
-            time_duration = st.slider('Time Duration', min_value=0.0, max_value=20.0, step=0.5, value=1.0)
+            duration_time = st.slider('Time Duration', min_value=0.0, max_value=20.0, step=0.5, value=1.0)
 
     with col2: # Petition_PWD table
         DDBB = st.selectbox('DDBB', ['Oracle Physics', 'Oracle R2', 'Elasticsearch', 'Mongo DB', 'PostgreSQL'])
@@ -68,21 +68,22 @@ with st.form(key='petition_info'):
 
 # Procesar los datos del formulario
 if submit_button:
-    st.write('Petition Code:', petition_code)
-    st.write('DQDP Code:', DQDP_code)
-    st.write('SDA Tool:', sdatool)
-    st.write('Feature:', feature)
-    st.write('UUAA:', UUAA)
+    st.write('Petition Code:', petition_code.strip().upper())
+    st.write('DQDP Code:', DQDP_code.strip().upper())
+    st.write('SDA Tool:', sdatool.strip().upper())
+    st.write('Feature:', feature.strip().upper())
+    st.write('UUAA:', UUAA.strip().upper())
     st.write('Geography:', geography)
+    st.write('DDBB:', DDBB)
     st.write('Dev Master:', dev_master)
     st.write('Version:', version)
-    st.write('Petition ARQ:', petition_arq)
+    st.write('Petition ARQ:', petition_arq.strip().upper())
     st.write('Estado:', estado)
     st.write('Date:', date)
     st.write('Fecha In:', fecha_in)
     st.write('Fecha Out:', fecha_out)
     st.write('Time Duration:', duration_time)
-    st.write('Descripción:', description)
+    st.write('Descripción:', descripcion.capitalize())
 
     petition_info = {
         'petition_code': petition_code,
@@ -91,6 +92,7 @@ if submit_button:
         'feature': feature,
         'UUAA': UUAA,
         'geography': geography,
+        'DDBB': DDBB,
         'dev_master': dev_master, 
         'version': version,
         'petition_arq': petition_arq,
@@ -99,7 +101,8 @@ if submit_button:
         'fecha_in': fecha_in,
         'fecha_out': fecha_out,
         'duration_time': duration_time,
-        'description': description
+        'description': descripcion
     }
+    
 
-    insert_data(petition_form)
+    insert_data(petition_info)
