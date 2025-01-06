@@ -57,7 +57,7 @@ with st.form(key='petition_info'):
         with col2_1b:
             version_date = st.date_input('Fecha de la versión')
         with col2_2b:
-            version = st.text_input('Version + desc (CHAR 64). Ej: v1 + Posible master v1')
+            version = st.text_input('Version + desc (CHAR 64). Ej: v1 dev + Posible master v1')
         descripcion = st.text_area('Descripción')
         
 

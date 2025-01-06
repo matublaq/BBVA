@@ -77,7 +77,7 @@ def create_database_testing():
             DDBB VARCHAR(32),
             dev_master VARCHAR(10) CHECK (dev_master IN ('Dev', 'Master', 'None')),
             version VARCHAR(64),
-            date DATE,
+            version_date DATE,
             description VARCHAR(255),
             PRIMARY KEY (UUAA, geography, dev_master, DDBB),
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),

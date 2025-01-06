@@ -107,7 +107,7 @@ def create_database():
             DDBB VARCHAR(32) NOT NULL,
             dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
             version VARCHAR(64) NOT NULL,
-            date DATE NOT NULL,
+            version_date DATE NOT NULL,
             description VARCHAR(255),
             PRIMARY KEY (UUAA, geography, dev_master, DDBB),
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
