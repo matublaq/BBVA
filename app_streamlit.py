@@ -55,7 +55,7 @@ with st.form(key='petition_info'):
         
         col2_1b, col2_2b = st.columns([1, 2])
         with col2_1b:
-            date = st.date_input('Fecha de la versión')
+            version_date = st.date_input('Fecha de la versión')
         with col2_2b:
             version = st.text_input('Version + desc (CHAR 64). Ej: v1 + Posible master v1')
         descripcion = st.text_area('Descripción')
@@ -79,7 +79,7 @@ if submit_button:
     st.write('Version:', version)
     st.write('Petition ARQ:', petition_arq.strip().upper())
     st.write('Estado:', estado)
-    st.write('Date:', date)
+    st.write('Version date:', version_date)
     st.write('Fecha In:', fecha_in)
     st.write('Fecha Out:', fecha_out)
     st.write('Time Duration:', duration_time)
@@ -97,7 +97,7 @@ if submit_button:
         'version': version,
         'petition_arq': petition_arq,
         'estado': estado,
-        'date': date,
+        'version_date': version_date,
         'fecha_in': fecha_in,
         'fecha_out': fecha_out,
         'duration_time': duration_time,
