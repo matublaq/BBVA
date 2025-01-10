@@ -5,7 +5,6 @@ import streamlit.components.v1 as components
 
 from DataBase_functions import *
 
-
 # Page configuration
 st.set_page_config(layout="wide")
 st.markdown(
