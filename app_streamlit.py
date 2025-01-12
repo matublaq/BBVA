@@ -106,10 +106,10 @@ if submit_button:
         'description': descripcion
     }
     
-    insert_data(petition_info)
+    insert_data_testing(petition_info)
 
 ###################################################################################################################################
-st.markdown("<h1 style='font-size: 40px; text-align: center; color: #E5E1DA'>Statics</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='font-size: 40px; text-align: center; color: #E5E1DA'>Información</p>", unsafe_allow_html=True)
 st.markdown('---')
 
 ################################################################################
@@ -131,21 +131,22 @@ st.write(geography_selected)
 query = f"""
     SELECT pd.version, pd.version_date, p.*
     FROM Power_Design pd
-    JOIN Peticion_PWD pp ON pd.UUAA = pp.uuaa
-                        AND pd.geography = pp.geography
-                        AND pd.dev_master = pp.dev_master 
-                        AND pd.DDBB = pp.DDBB
-                        AND pd.version = pp.version
+    JOIN Peticion_PWD pp ON (pd.UUAA = pp.UUAA OR pd.UUAA IS NULL AND pp.UUAA IS NULL)
+                        AND (pd.geography = pp.geography OR pd.geography IS NULL AND pp.geography IS NULL)
+                        AND (pd.dev_master = pp.dev_master OR pd.dev_master IS NULL AND pp.dev_master IS NULL) 
+                        AND (pd.DDBB = pp.DDBB OR pd.DDBB IS NULL AND pp.DDBB IS NULL)
+                        AND (pd.version = pp.version OR pd.version IS NULL AND pp.version IS NULL)
     JOIN Peticion p ON pp.petition_code = p.petition_code
     WHERE pd.UUAA = '{uuaa_selected}'
     AND pd.geography = '{geography_selected}';
 """
-cursor1.execute(query)
+cursor1.execute(query) #WHERE pd.UUAA = 'GDEL' AND pd.geography = 'Global';
 resultado = cursor1.fetchall()
-st.write(resultado)
 
-rta = [x[0] for x in cursor1.fetchall()]
-st.write(rta)
+column_name = [description[0] for description in cursor1.description]
+df_resultado = pd.DataFrame(resultado, columns=column_name).drop_duplicates(keep="first")
+
+st.write(df_resultado)
 
 #######
 conn1.commit()

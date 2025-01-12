@@ -223,7 +223,7 @@ def insert_data_testing(petition_info):
         pwd_records = cursor1.fetchall()
         if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
             cursor1.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, DDBB, dev_master, version, description) VALUES (?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #SQLite3
-
+    
         #Confirm the transaction
         conn1.commit()
 
