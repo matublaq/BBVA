@@ -141,7 +141,7 @@ def insert_data_testing(petition_info):
     petition_info["sdatool"] = petition_info["sdatool"].strip().upper()
     petition_info["feature"] = petition_info["feature"].strip().upper()
     petition_info["UUAA"] = petition_info["UUAA"].strip().upper()
-    #petition_info["geography"]
+    petition_info["geography"] = petition_info["geography"].strip()
     #petition_info["DDBB"]
     #petition_info["dev_master"]
     petition_info["version"] = petition_info["version"].strip()
@@ -153,9 +153,33 @@ def insert_data_testing(petition_info):
     #petition_info["duration_time"]
     petition_info["description"] = petition_info["description"].strip().capitalize()
 
-    for key, value in petition_info.items():
-        if value == "Nan" or value == None or value == "" or value == "None": 
+
+    for key in petition_info.keys():
+        if petition_info[key] == "Nan" or petition_info[key] == None or petition_info[key] == "" or petition_info[key] == "None" or petition_info[key] == np.nan: 
             petition_info[key] = None
+        
+        if key == "DDBB": 
+            if petition_info[key] == "ORACLE Physics" or petition_info[key] == "ORACLE PHYSICS":
+                petition_info[key] = "Oracle Physics"
+            elif petition_info[key] == "ELASTICSEARCH" or petition_info[key] == "ElasTICSEARCH" or petition_info[key] == "ElaSTICSEARCH": 
+                petition_info[key] = "Elastic Search"
+            elif petition_info[key] == "ORACLE R2" or petition_info[key] == "oracle r2": 
+                petition_info[key] = "Oracle R2"
+            elif petition_info[key] == "DB2 HOST": 
+                petition_info[key] = "DB2 Host"
+            elif petition_info[key] == "TERADATA" or petition_info[key] == "teradata": 
+                petition_info[key] = "Teradata"
+            elif petition_info[key] == "MongoDB" or petition_info[key] == "MONGO DB" or petition_info[key] == "MongoDB" or petition_info[key] == "MONGODB": 
+                petition_info[key] = "Mongo DB"
+            elif petition_info[key] == "POSTGRESS R2" or petition_info[key] == "POSTGRESS Physics" or petition_info[key] == "PosgreSQL": 
+                petition_info[key] = "PostgreSQL"
+            elif petition_info[key] == "NETEZZA": 
+                petition_info[key] = "Netezza"
+
+        if key == "geography": 
+            if petition_info[key] == "España-CIB" or petition_info[key] == "España/CIB": 
+                petition_info[key] = "CIB"
+
     ################################################################################
     try:
         ###########################################################################################################################

@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
+import sqlite3
+
 import streamlit as st
 import streamlit.components.v1 as components
 
 from DataBase_functions import *
+from DataBase_functions_testing import *
 
 # Page configuration
 st.set_page_config(layout="wide")
@@ -103,5 +106,49 @@ if submit_button:
         'description': descripcion
     }
     
-
     insert_data(petition_info)
+
+###################################################################################################################################
+st.markdown("<h1 style='font-size: 40px; text-align: center; color: #E5E1DA'>Statics</p>", unsafe_allow_html=True)
+st.markdown('---')
+
+################################################################################
+conn1 = sqlite3.connect("BBVA_testing.db")
+cursor1 = conn1.cursor()
+cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
+
+#######
+cursor1.execute("SELECT UUAA FROM UUAA")
+all_uuaa = [x[0] for x in cursor1.fetchall()]
+uuaa_selected = st.selectbox("UUAA: ", all_uuaa)
+st.write(uuaa_selected)
+
+cursor1.execute("SELECT geography FROM Geography")
+all_geography = [x[0] for x in cursor1.fetchall()]
+geography_selected = st.selectbox("Geography: ", all_geography)
+st.write(geography_selected)
+
+query = f"""
+    SELECT pd.version, pd.version_date, p.*
+    FROM Power_Design pd
+    JOIN Peticion_PWD pp ON pd.UUAA = pp.uuaa
+                        AND pd.geography = pp.geography
+                        AND pd.dev_master = pp.dev_master 
+                        AND pd.DDBB = pp.DDBB
+                        AND pd.version = pp.version
+    JOIN Peticion p ON pp.petition_code = p.petition_code
+    WHERE pd.UUAA = '{uuaa_selected}'
+    AND pd.geography = '{geography_selected}';
+"""
+cursor1.execute(query)
+resultado = cursor1.fetchall()
+st.write(resultado)
+
+rta = [x[0] for x in cursor1.fetchall()]
+st.write(rta)
+
+#######
+conn1.commit()
+cursor1.close()
+conn1.close()
+

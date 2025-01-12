@@ -249,7 +249,7 @@ def insert_data(petition_info):
     petition_info["sdatool"] = petition_info["sdatool"].strip().upper()
     petition_info["feature"] = petition_info["feature"].strip().upper()
     petition_info["UUAA"] = petition_info["UUAA"].strip().upper()
-    #petition_info["geography"]
+    petition_info["geography"] = petition_info["geography"].strip()
     #petition_info["DDBB"]
     #petition_info["dev_master"]
     petition_info["version"] = petition_info["version"].strip()
@@ -261,9 +261,30 @@ def insert_data(petition_info):
     #petition_info["duration_time"]
     petition_info["description"] = petition_info["description"].strip().capitalize()
 
+
     for key, value in petition_info.items():
         if value == "Nan" or value == None or value == "" or value == "None": 
             petition_info[key] = None
+        
+        if petition_info[key] == "DDBB": 
+            if value == "ORACLE Physics" or "ORACLE PHYSICS":
+                petition_info[key] = "Oracle Physics"
+            if value == "ELASTICSEARCH" or value == "ElasTICSEARCH" or value == "ElaSTICSEARCH": 
+                petition_info[key] = "Elastic Search"
+            if value == "ORACLE R2" or value == "oracle r2": 
+                petition_info[key] = "Oracle R2"
+            if value == "DB2 HOST": 
+                petition_info[key] = "DB2 Host"
+            if value == "TERADATA" or value == "teradata": 
+                petition_info[key] = "Teradata"
+            if value == "MongoDB" or value == "MONGO DB" or value == "MongoDB": 
+                petition_info[key] = "Mongo DB"
+            if value == "POSTGRESS R2" or value == "POSTGRESS Physics" or value == "PosgreSQL": 
+                value = "PostgreSQL"
+        
+        if petition_info[key] == "geography": 
+            if value == "España-CIB" or "España/CIB": 
+                petition_info[key] = "CIB"
     ################################################################################
     try:
         ###########################################################################################################################
