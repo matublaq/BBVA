@@ -6,3 +6,4 @@ pandas
 time
 subprocess
 streamlit
+streamlit_aggrid

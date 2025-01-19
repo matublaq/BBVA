@@ -23,7 +23,68 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+###################################################################################################################################
+########################################################## Mostrar la información #################################################
+st.markdown("<h1 style='font-size: 40px; text-align: center; color: #E5E1DA'>Información</p>", unsafe_allow_html=True)
+st.markdown('---')
 
+################################################################################
+conn1 = sqlite3.connect("BBVA_testing.db")
+cursor1 = conn1.cursor()
+cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
+
+#######
+cursor1.execute("SELECT UUAA FROM UUAA")
+all_uuaa = [x[0] for x in cursor1.fetchall()]
+all_uuaa.insert(0, None)
+uuaa_selected = st.selectbox("UUAA: ", all_uuaa)
+st.write(uuaa_selected)
+ 
+cursor1.execute(f"SELECT DISTINCT(g.geography) FROM Geography g JOIN Power_Design pd ON pd.geography = g.geography WHERE pd.UUAA = '{uuaa_selected}' OR pd.UUAA IS NULL")
+all_geography = [x[0] for x in cursor1.fetchall()]
+geography_selected = st.selectbox("Geography: ", all_geography)
+st.write(geography_selected)
+ 
+cursor1.execute(f"SELECT DISTINCT(ddbb.DDBB) FROM DDBB ddbb JOIN Power_Design pd ON pd.DDBB = ddbb.DDBB WHERE (pd.geography = '{geography_selected}' OR pd.geography IS NULL) AND (pd.UUAA = '{uuaa_selected}' OR pd.UUAA IS NULL)")
+all_ddbb = [x[0] for x in cursor1.fetchall()]
+ddbb_selected = st.selectbox("DDBB: ", all_ddbb)
+st.write(ddbb_selected)
+
+query = f"""
+    SELECT pd.version, pd.version_date, p.*
+    FROM Power_Design pd
+    JOIN Peticion_PWD pp ON (pd.UUAA = pp.UUAA OR pd.UUAA IS NULL AND pp.UUAA IS NULL)
+                        AND (pd.geography = pp.geography OR pd.geography IS NULL AND pp.geography IS NULL)
+                        AND (pd.DDBB = pp.DDBB OR pd.DDBB IS NULL AND pp.DDBB IS NULL)
+                        AND (pd.dev_master = pp.dev_master OR pd.dev_master IS NULL AND pp.dev_master IS NULL) 
+                        AND (pd.version = pp.version OR pd.version IS NULL AND pp.version IS NULL)
+    JOIN Peticion p ON pp.petition_code = p.petition_code
+    WHERE pd.UUAA = '{uuaa_selected}'
+    AND pd.geography = '{geography_selected}'
+    AND pd.DDBB = '{ddbb_selected}';
+"""
+cursor1.execute(query) #WHERE pd.UUAA = 'GDEL' AND pd.geography = 'Global' AND pd.DDBB;
+resultado = cursor1.fetchall()
+
+column_name = [description[0] for description in cursor1.description]
+df_resultado = pd.DataFrame(resultado, columns=column_name).drop_duplicates(keep="first")
+df_resultado = df_resultado.sort_values(by=['fecha_out', 'DQDP_code'], ascending=[False, False])
+pd.set_option('display.max_colwidth', None)
+st.dataframe(df_resultado, use_container_width=True)
+
+#######
+conn1.commit()
+cursor1.close()
+conn1.close()
+
+###################################################################################################################################
+########################################################## Actualizar información #################################################
+
+
+
+###################################################################################################################################
+########################################################## Petición ###############################################################
+st.markdown('--- \n ---')
 st.markdown("<h1 style='font-size: 50px; text-align: center; color: #E5E1DA'>Petición</p>", unsafe_allow_html=True)
 st.markdown('---')
 
@@ -85,7 +146,7 @@ if submit_button:
     st.write('Fecha In:', fecha_in)
     st.write('Fecha Out:', fecha_out)
     st.write('Time Duration:', duration_time)
-    st.write('Descripción:', descripcion.capitalize())
+    st.write('Descripción:', descripcion)
 
     petition_info = {
         'petition_code': petition_code,
@@ -107,49 +168,3 @@ if submit_button:
     }
     
     insert_data_testing(petition_info)
-
-###################################################################################################################################
-st.markdown("<h1 style='font-size: 40px; text-align: center; color: #E5E1DA'>Información</p>", unsafe_allow_html=True)
-st.markdown('---')
-
-################################################################################
-conn1 = sqlite3.connect("BBVA_testing.db")
-cursor1 = conn1.cursor()
-cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
-
-#######
-cursor1.execute("SELECT UUAA FROM UUAA")
-all_uuaa = [x[0] for x in cursor1.fetchall()]
-uuaa_selected = st.selectbox("UUAA: ", all_uuaa)
-st.write(uuaa_selected)
-
-cursor1.execute("SELECT geography FROM Geography")
-all_geography = [x[0] for x in cursor1.fetchall()]
-geography_selected = st.selectbox("Geography: ", all_geography)
-st.write(geography_selected)
-
-query = f"""
-    SELECT pd.version, pd.version_date, p.*
-    FROM Power_Design pd
-    JOIN Peticion_PWD pp ON (pd.UUAA = pp.UUAA OR pd.UUAA IS NULL AND pp.UUAA IS NULL)
-                        AND (pd.geography = pp.geography OR pd.geography IS NULL AND pp.geography IS NULL)
-                        AND (pd.dev_master = pp.dev_master OR pd.dev_master IS NULL AND pp.dev_master IS NULL) 
-                        AND (pd.DDBB = pp.DDBB OR pd.DDBB IS NULL AND pp.DDBB IS NULL)
-                        AND (pd.version = pp.version OR pd.version IS NULL AND pp.version IS NULL)
-    JOIN Peticion p ON pp.petition_code = p.petition_code
-    WHERE pd.UUAA = '{uuaa_selected}'
-    AND pd.geography = '{geography_selected}';
-"""
-cursor1.execute(query) #WHERE pd.UUAA = 'GDEL' AND pd.geography = 'Global';
-resultado = cursor1.fetchall()
-
-column_name = [description[0] for description in cursor1.description]
-df_resultado = pd.DataFrame(resultado, columns=column_name).drop_duplicates(keep="first")
-
-st.write(df_resultado)
-
-#######
-conn1.commit()
-cursor1.close()
-conn1.close()
-
