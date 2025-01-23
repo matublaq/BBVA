@@ -1,4 +1,3 @@
-sqlite3
 nbformat
 psycopg2
 numpy
