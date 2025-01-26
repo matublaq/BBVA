@@ -51,15 +51,14 @@ def create_database():
     query = '''
         CREATE TABLE IF NOT EXISTS Peticion (
             petition_code VARCHAR(64) PRIMARY KEY,
-            DQDP_code VARCHAR(64) NOT NULL,
-            sdatool VARCHAR(64) NOT NULL,
-            feature VARCHAR(64) NOT NULL,
-            petition_arq VARCHAR(64) NOT NULL,
-            estado VARCHAR(20) NOT NULL CHECK (estado IN ('Pendiente', 'En Proceso', 'Finalizado')),
-            fecha_in DATE NOT NULL,
-            fecha_out DATE NOT NULL,
-            duration_time NUMERIC(4, 2) NOT NULL, 
-            description VARCHAR(255) NOT NULL
+            DQDP_code VARCHAR(64),
+            sdatool VARCHAR(64),
+            feature VARCHAR(64),
+            petition_arq VARCHAR(64),
+            fecha_in DATE,
+            fecha_out DATE,
+            duration_time NUMERIC(4, 2), 
+            description VARCHAR(255)
         );
     '''
     cursor1.execute(query)
@@ -102,12 +101,12 @@ def create_database():
     # Crear la tabla Power_Design
     query = '''
         CREATE TABLE IF NOT EXISTS Power_Design (
-            UUAA VARCHAR(4) NOT NULL,
-            geography VARCHAR(32) NOT NULL,
-            DDBB VARCHAR(32) NOT NULL,
-            dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
-            version VARCHAR(64) NOT NULL,
-            version_date DATE NOT NULL,
+            UUAA VARCHAR(4),
+            geography VARCHAR(32),
+            DDBB VARCHAR(32),
+            dev_master VARCHAR(10) CHECK (dev_master IN ('Dev', 'Master', 'None')),
+            version VARCHAR(64),
+            version_date DATE,
             description VARCHAR(255),
             PRIMARY KEY (UUAA, geography, dev_master, DDBB),
             FOREIGN KEY (UUAA) REFERENCES UUAA(UUAA),
@@ -123,11 +122,11 @@ def create_database():
     query = '''
         CREATE TABLE IF NOT EXISTS Peticion_PWD (
             petition_code VARCHAR(64) NOT NULL,
-            UUAA VARCHAR(4) NOT NULL,
-            geography VARCHAR(32) NOT NULL,
-            DDBB VARCHAR(32) NOT NULL,
-            dev_master VARCHAR(10) NOT NULL CHECK (dev_master IN ('Dev', 'Master', 'None')),
-            version VARCHAR(64) NOT NULL,
+            UUAA VARCHAR(4),
+            geography VARCHAR(32),
+            DDBB VARCHAR(32,
+            dev_master VARCHAR(10) CHECK (dev_master IN ('Dev', 'Master', 'None')),
+            version VARCHAR(64),
             description VARCHAR(255),
             PRIMARY KEY (petition_code, UUAA, geography, DDBB, dev_master),
             FOREIGN KEY (petition_code) REFERENCES Peticion(petition_code), 
