@@ -2,9 +2,9 @@
 import sqlite3
 import nbformat
 
-#PostgreSQL
-import psycopg2
-from psycopg2 import sql
+#PostgreSQL Is not working on Streamlit yet
+#import psycopg2
+#from psycopg2 import sql
 
 #General
 import numpy as np
