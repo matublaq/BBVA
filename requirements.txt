@@ -2,4 +2,3 @@ nbformat
 numpy
 pandas 
 streamlit
-psycopg2
