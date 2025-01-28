@@ -1,5 +1,4 @@
 nbformat
 numpy
 pandas 
-subprocess
 streamlit
