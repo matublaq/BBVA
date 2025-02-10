@@ -14,6 +14,9 @@ import time
 #Execute shell commands
 import subprocess
 
+import streamlit as st
+import streamlit.components.v1 as components
+
 #Google sheed API
 import gspread
 from gspread_dataframe import set_with_dataframe
@@ -242,35 +245,37 @@ def insert_data_testing(petition_info):
             conn1.close()
     ##########################################################################################################################################
     ######################################################## PETITION EXCEL ##################################################################
-    # Email service account that need to share the google sheet
-    #email that need to share the google sheet = matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
-    service_account_email = "matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com"
+    
+    if st.runtime.exists(): 
+        # Email service account that need to share the google sheet
+        #email that need to share the google sheet = matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
+        service_account_email = "matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com"
 
-    scope = [
-        'https://spreadsheets.google.com/feeds', 
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive'
-        ]
+        scope = [
+            'https://spreadsheets.google.com/feeds', 
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive'
+            ]
 
-    credentials = "credentials.json"
+        credentials = "credentials.json"
 
-    #Cargar credenciales
-    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
+        #Cargar credenciales
+        creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
 
-    #Autorizar gspread con las credenciales
-    client = gspread.authorize(creds)
+        #Autorizar gspread con las credenciales
+        client = gspread.authorize(creds)
 
-    # ID de la hoja de cálculo 
-    srpeadsheet_id = "1biaKHw0fV5w5HBWsAto2Q-WCLkXe4bwc72hoS6BNDe8" #petitions file
+        # ID de la hoja de cálculo 
+        srpeadsheet_id = "1biaKHw0fV5w5HBWsAto2Q-WCLkXe4bwc72hoS6BNDe8" #petitions file
 
-    # Open the Google Sheet file by ID
-    spreadsheet = client.open_by_key(srpeadsheet_id)
+        # Open the Google Sheet file by ID
+        spreadsheet = client.open_by_key(srpeadsheet_id)
 
-    # Select worksheet
-    worksheet = spreadsheet.worksheet('Agregadas a mano')
+        # Select worksheet
+        worksheet = spreadsheet.worksheet('All petitions')
 
-    #new row
-    new_row_list = list(petition_info.values()) 
-    worksheet.append_row(new_row_list)
+        #new row
+        new_row_list = list(petition_info.values()) 
+        worksheet.append_row(new_row_list)
 
 
