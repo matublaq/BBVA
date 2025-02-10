@@ -14,6 +14,13 @@ import time
 #Execute shell commands
 import subprocess
 
+#Google sheed API
+import gspread
+from gspread_dataframe import set_with_dataframe
+from google.oauth2 import service_account
+from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 #########################################################################################################################
 ##################################### SQLite3, PostgreSQL LOCAL, Render(PostgreSQL) #####################################
@@ -33,7 +40,6 @@ def create_database_testing():
             sdatool VARCHAR(64),
             feature VARCHAR(64),
             petition_arq VARCHAR(64),
-            estado VARCHAR(20) CHECK (estado IN ('Pendiente', 'En Proceso', 'Finalizado')),
             fecha_in DATE,
             fecha_out DATE,
             duration_time NUMERIC(4, 2), 
@@ -129,6 +135,8 @@ def drop_tables_testing():
     conn1.close()
 
 def insert_data_testing(petition_info): 
+    ##########################################################################################################################################
+    ######################################################## RELATIONAL DATABASE #############################################################
     ################################################################################
     conn1 = sqlite3.connect("BBVA_testing.db")
     cursor1 = conn1.cursor()
@@ -146,14 +154,13 @@ def insert_data_testing(petition_info):
     #petition_info["dev_master"]
     petition_info["version"] = petition_info["version"].strip()
     petition_info["petition_arq"] = petition_info["petition_arq"].strip().upper()
-    #petition_info["estado"]
     #petition_info["version_date"]
     #petition_info["fecha_in"]
     #petition_info["fecha_out"]
     #petition_info["duration_time"]
     petition_info["description"] = petition_info["description"].strip().capitalize()
 
-
+    #Limpiamos datos del DDBB y de la geography
     for key in petition_info.keys():
         if petition_info[key] == "Nan" or petition_info[key] == None or petition_info[key] == "" or petition_info[key] == "None" or petition_info[key] == np.nan: 
             petition_info[key] = None
@@ -187,7 +194,7 @@ def insert_data_testing(petition_info):
         cursor1.execute("SELECT petition_code FROM Peticion")
         petition_records = cursor1.fetchall()
         if not petition_info['petition_code'] in [record[0] for record in petition_records]:
-            cursor1.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #SQLite3
+            cursor1.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, fecha_in, fecha_out, duration_time, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #SQLite3
 
         ###########################################################################################################################
         #If UUAA  already exists? Insert data into UUAA table
@@ -233,3 +240,37 @@ def insert_data_testing(petition_info):
             cursor1.close()
         if conn1:
             conn1.close()
+    ##########################################################################################################################################
+    ######################################################## PETITION EXCEL ##################################################################
+    # Email service account that need to share the google sheet
+    #email that need to share the google sheet = matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
+    service_account_email = "matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com"
+
+    scope = [
+        'https://spreadsheets.google.com/feeds', 
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+        ]
+
+    credentials = "credentials.json"
+
+    #Cargar credenciales
+    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
+
+    #Autorizar gspread con las credenciales
+    client = gspread.authorize(creds)
+
+    # ID de la hoja de cálculo 
+    srpeadsheet_id = "1biaKHw0fV5w5HBWsAto2Q-WCLkXe4bwc72hoS6BNDe8" #petitions file
+
+    # Open the Google Sheet file by ID
+    spreadsheet = client.open_by_key(srpeadsheet_id)
+
+    # Select worksheet
+    worksheet = spreadsheet.worksheet('Agregadas a mano')
+
+    #new row
+    new_row_list = list(petition_info.values()) 
+    worksheet.append_row(new_row_list)
+
+

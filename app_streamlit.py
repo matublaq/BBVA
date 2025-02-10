@@ -94,7 +94,6 @@ with st.form(key='petition_info'):
     with col1: # Petition table
         col1_1, col1_2 = st.columns(2)
         with col1_1:
-            estado = st.selectbox('Estado', ['Pendiente', 'En Proceso', 'Finalizado'])
             petition_code = st.text_input('Petition Code (CHAR 64)')
             sdatool = st.text_input('SDA Tool (CHAR 64)')
             fecha_in = st.date_input('Fecha In')
@@ -104,7 +103,6 @@ with st.form(key='petition_info'):
             petition_arq = st.text_input('Petition ARQ (CHAR 64)')
             feature = st.text_input('Feature (CHAR 64)')
             fecha_out = st.date_input('Fecha Out')
-            duration_time = st.slider('Time Duration', min_value=0.0, max_value=20.0, step=0.5, value=1.0)
 
     with col2: # Petition_PWD table
         DDBB = st.selectbox('DDBB', ['Oracle Physics', 'Oracle R2', 'Elasticsearch', 'Mongo DB', 'PostgreSQL'])
@@ -141,7 +139,6 @@ if submit_button:
     st.write('Dev Master:', dev_master)
     st.write('Version:', version)
     st.write('Petition ARQ:', petition_arq.strip().upper())
-    st.write('Estado:', estado)
     st.write('Version date:', version_date)
     st.write('Fecha In:', fecha_in)
     st.write('Fecha Out:', fecha_out)
@@ -149,20 +146,19 @@ if submit_button:
     st.write('Descripción:', descripcion)
 
     petition_info = {
-        'petition_code': petition_code,
-        'DQDP_code': DQDP_code,
-        'sdatool': sdatool,
-        'feature': feature,
-        'UUAA': UUAA,
+        'petition_code': petition_code.strip().upper() if petition_code else None, #manejar valores vacíos
+        'DQDP_code': DQDP_code.strip().upper() if DQDP_code else None,
+        'sdatool': sdatool.strip().upper() if sdatool else None,
+        'feature': feature.strip().upper() if feature else None,
+        'UUAA': UUAA.strip().upper() if UUAA else None,
         'geography': geography,
         'DDBB': DDBB,
-        'dev_master': dev_master, 
+        'dev_master': dev_master,
         'version': version,
-        'petition_arq': petition_arq,
-        'estado': estado,
-        'version_date': version_date,
-        'fecha_in': fecha_in,
-        'fecha_out': fecha_out,
+        'petition_arq': petition_arq.strip().upper() if petition_arq else None,
+        'version_date': version_date.strftime("%d/%m/%Y") if version_date else None,  # ¡Convertir a string!
+        'fecha_in': fecha_in.strftime("%d/%m/%Y") if fecha_in else None,  # ¡Convertir a string!
+        'fecha_out': fecha_out.strftime("%d/%m/%Y") if fecha_out else None,  # ¡Convertir a string!
         'duration_time': duration_time,
         'description': descripcion
     }
