@@ -2,8 +2,8 @@
 import sqlite3
 import nbformat
 
-#PostgreSQL  No es compatible con Streamlit aún
-#import psycopg2 
+#PostgreSQL Is not working on Streamlit yet
+#import psycopg2
 #from psycopg2 import sql
 
 #General
@@ -13,6 +13,16 @@ import time
 
 #Execute shell commands
 import subprocess
+
+import streamlit as st
+import streamlit.components.v1 as components
+
+#Google sheed API
+import gspread
+from gspread_dataframe import set_with_dataframe
+from google.oauth2 import service_account
+from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 #########################################################################################################################
@@ -25,37 +35,14 @@ def create_database():
     cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
 
     ################################################################################
-    '''
-    conn2 =  psycopg2.connect(
-        dbname = "pwd_control", 
-        user = "postgres", 
-        password = "Matias123!", 
-        host = "localhost",
-        port = "5432"
-    )
-    cursor2 = conn2.cursor()
-    '''
-
-    ################################################################################
-    '''
-    conn3 =  psycopg2.connect(
-        dbname = "pwd_control_plnk", 
-        user = "matublaq",
-        password = "SF19KOpSPMl8Ru51ONQ33AHOf0RuZnne", 
-        host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
-        port = "5432"
-    )
-    cursor3 = conn3.cursor()	
-    '''
-    ################################################################################
     # Crear la tabla Peticion
     query = '''
         CREATE TABLE IF NOT EXISTS Peticion (
             petition_code VARCHAR(64) PRIMARY KEY,
             DQDP_code VARCHAR(64),
-            sdatool VARCHAR(64),
-            feature VARCHAR(64),
             petition_arq VARCHAR(64),
+            sdatool VARCHAR(64), 
+            feature VARCHAR(64), 
             fecha_in DATE,
             fecha_out DATE,
             duration_time NUMERIC(4, 2), 
@@ -63,8 +50,6 @@ def create_database():
         );
     '''
     cursor1.execute(query)
-    #cursor2.execute(query)
-    #cursor3.execute(query)
     
     #Create a UUAA table
     query = '''
@@ -74,8 +59,6 @@ def create_database():
         );
     '''
     cursor1.execute(query)
-    #cursor2.execute(query)
-    #cursor3.execute(query)
 
     # Crear la tabla Geography
     query = '''
@@ -85,8 +68,6 @@ def create_database():
         );
     '''
     cursor1.execute(query)
-    #cursor2.execute(query)
-    #cursor3.execute(query)
 
     # Crear la tabla DDBB
     query = '''
@@ -96,8 +77,6 @@ def create_database():
         );
     '''
     cursor1.execute(query)
-    #cursor2.execute(query)
-    #cursor3.execute(query)
 
     # Crear la tabla Power_Design
     query = '''
@@ -116,16 +95,14 @@ def create_database():
         );
     '''
     cursor1.execute(query)
-    #cursor2.execute(query)
-    #cursor3.execute(query)
 
     # Crear la tabla Peticion_PWD 
     query = '''
         CREATE TABLE IF NOT EXISTS Peticion_PWD (
-            petition_code VARCHAR(64) NOT NULL,
+            petition_code VARCHAR(64),
             UUAA VARCHAR(4),
             geography VARCHAR(32),
-            DDBB VARCHAR(32,
+            DDBB VARCHAR(32),
             dev_master VARCHAR(10) CHECK (dev_master IN ('Dev', 'Master', 'None')),
             version VARCHAR(64),
             description VARCHAR(255),
@@ -138,23 +115,11 @@ def create_database():
         );
     '''
     cursor1.execute(query)
-    #cursor2.execute(query)
-    #cursor3.execute(query)
 
 ########################
     conn1.commit()
     cursor1.close()
     conn1.close()
-
-########################
-    #conn2.commit()
-    #cursor2.close()
-    #conn2.close()
-
-########################
-    #conn3.commit()
-    #cursor3.close()
-    #conn3.close()
 
 def drop_tables():
     ################################################################################
@@ -163,130 +128,128 @@ def drop_tables():
     cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
 
     ################################################################################
-    '''
-    conn2 =  psycopg2.connect(
-        dbname = "pwd_control", 
-        user = "postgres", 
-        password = "Matias123!", 
-        host = "localhost",
-        port = "5432"
-    )
-    cursor2 = conn2.cursor()
-    '''
-
-    ################################################################################
-    '''
-    conn3 =  psycopg2.connect(
-        dbname = "pwd_control_plnk", 
-        user = "matublaq",
-        password = "SF19KOpSPMl8Ru51ONQ33AHOf0RuZnne", 
-        host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
-        port = "5432"
-    )
-    cursor3 = conn3.cursor()
-    '''
-    ################################################################################
     tables = ["Peticion_PWD", "Power_Design", "DDBB", "Geography", "UUAA", "Peticion"]
     for table in tables:
         cursor1.execute(f"DROP TABLE IF EXISTS {table}")
-    query = '''
-        DROP TABLE IF EXISTS Peticion_PWD CASCADE;
-        DROP TABLE IF EXISTS Power_Design CASCADE;
-        DROP TABLE IF EXISTS DDBB CASCADE;
-        DROP TABLE IF EXISTS Geography CASCADE;
-        DROP TABLE IF EXISTS UUAA CASCADE;
-        DROP TABLE IF EXISTS Peticion CASCADE;
-    '''
-    #cursor2.execute(query)
-    #cursor3.execute(query)
 
     ########################
     conn1.commit()
     cursor1.close()
     conn1.close()
 
-    ########################
-    #conn2.commit()
-    #cursor2.close()
-    #conn2.close()
-
-    ########################
-    #conn3.commit()
-    #cursor3.close()
-    #conn3.close()
-
-def insert_data(petition_info): 
+def insert_data(petition_info):   
+    ##########################################################################################################################################
+    ######################################################## RELATIONAL DATABASE #############################################################
     ################################################################################
     conn1 = sqlite3.connect("BBVA.db")
     cursor1 = conn1.cursor()
     cursor1.execute("PRAGMA foreign_keys = ON") #In sqlite3 foreign keys are disabled by default
 
     ################################################################################
-    '''
-    conn2 =  psycopg2.connect(
-        dbname = "pwd_control", 
-        user = "postgres", 
-        password = "Matias123!", 
-        host = "localhost",
-        port = "5432"
-    )
-    cursor2 = conn2.cursor()
-    '''
-
-    ################################################################################
-    '''
-    conn3 =  psycopg2.connect(
-        dbname = "pwd_control_plnk", 
-        user = "matublaq",
-        password = "SF19KOpSPMl8Ru51ONQ33AHOf0RuZnne", 
-        host = "dpg-ctevf3t6l47c73b4jadg-a.oregon-postgres.render.com",
-        port = "5432"
-    )
-    cursor3 = conn3.cursor()
-    '''
-    ################################################################################
     #Data validation
-    petition_info["petition_code"] = petition_info["petition_code"].strip().upper()
-    petition_info["DQDP_code"] = petition_info["DQDP_code"].strip().upper()
-    petition_info["sdatool"] = petition_info["sdatool"].strip().upper()
-    petition_info["feature"] = petition_info["feature"].strip().upper()
-    petition_info["UUAA"] = petition_info["UUAA"].strip().upper()
-    petition_info["geography"] = petition_info["geography"].strip()
-    #petition_info["DDBB"]
-    #petition_info["dev_master"]
-    petition_info["version"] = petition_info["version"].strip()
-    petition_info["petition_arq"] = petition_info["petition_arq"].strip().upper()
-    #petition_info["estado"]
-    #petition_info["version_date"]
-    #petition_info["fecha_in"]
-    #petition_info["fecha_out"]
-    #petition_info["duration_time"]
-    petition_info["description"] = petition_info["description"].strip().capitalize()
+    if "petition_code" in petition_info: 
+        petition_info["petition_code"] = petition_info["petition_code"].strip().upper()
+    else: 
+        petition_info["petition_code"] = "None"
 
+    if "DQDP_code" in petition_info: 
+        petition_info["DQDP_code"] = petition_info["DQDP_code"].strip().upper()
+    else: 
+        petition_info["DQDP_code"] = "None"
 
-    for key, value in petition_info.items():
-        if value == "Nan" or value == None or value == "" or value == "None": 
+    if "sdatool" in petition_info: 
+        petition_info["sdatool"] = petition_info["sdatool"].strip().upper()
+    else: 
+        petition_info["sdatool"] = "None"
+    
+    if "feature" in petition_info: 
+        petition_info["feature"] = petition_info["feature"].strip().upper()
+    else: 
+        petition_info["feature"] = "None"
+    
+    if "UUAA" in petition_info: 
+        petition_info["UUAA"] = petition_info["UUAA"].strip().upper()
+    else: 
+        petition_info["UUAA"] = "None"
+    
+    if "geography" in petition_info: 
+        petition_info["geography"] = petition_info["geography"].strip()
+    else: 
+        petition_info["geography"] = "None"
+
+    if "DDBB" in petition_info: 
+        petition_info["DDBB"] = petition_info["DDBB"].strip()
+    else: 
+        petition_info["DDBB"] = "None"
+
+    if "dev_master" in petition_info: 
+        petition_info["dev_master"] = petition_info["dev_master"].strip().capitalize()
+    else: 
+        petition_info["dev_master"] = "None"
+    
+    if "version" in petition_info: 
+        petition_info["version"] = petition_info["version"].strip()
+    else: 
+        petition_info["version"] = "None"
+
+    if "petition_arq" in petition_info: 
+        petition_info["petition_arq"] = petition_info["petition_arq"].strip().upper()
+    else: 
+        petition_info["petition_arq"] = "None"
+
+    if "version_date" in petition_info: 
+        petition_info["version_date"] = petition_info["version_date"].strip()
+    else: 
+        petition_info["version_date"] = "None"
+    
+    if "fecha_in" in petition_info: 
+        petition_info["fecha_in"] = petition_info["fecha_in"].strip()
+    else: 
+        petition_info["fecha_in"] = "None"
+    
+    if "fecha_out" in petition_info: 
+        petition_info["fecha_out"] = petition_info["fecha_out"].strip()
+    else: 
+        petition_info["fecha_out"] = "None"
+
+    if "duration_time" in petition_info: 
+        #petition_info["duration_time"]
+        pass
+    else: 
+        petition_info["version_date"] = "None"
+    
+    if "description" in petition_info: 
+        petition_info["description"] = petition_info["description"].strip().capitalize()
+    else: 
+        petition_info["description"] = "None"
+
+    #Limpiamos datos del DDBB y de la geography
+    for key in petition_info.keys():
+        if petition_info[key] == "Nan" or petition_info[key] == None or petition_info[key] == "" or petition_info[key] == "None" or petition_info[key] == np.nan: 
             petition_info[key] = None
         
-        if petition_info[key] == "DDBB": 
-            if value == "ORACLE Physics" or "ORACLE PHYSICS":
+        if key == "DDBB": 
+            if petition_info[key] == "ORACLE Physics" or petition_info[key] == "ORACLE PHYSICS":
                 petition_info[key] = "Oracle Physics"
-            if value == "ELASTICSEARCH" or value == "ElasTICSEARCH" or value == "ElaSTICSEARCH": 
+            elif petition_info[key] == "ELASTICSEARCH" or petition_info[key] == "ElasTICSEARCH" or petition_info[key] == "ElaSTICSEARCH": 
                 petition_info[key] = "Elastic Search"
-            if value == "ORACLE R2" or value == "oracle r2": 
+            elif petition_info[key] == "ORACLE R2" or petition_info[key] == "oracle r2": 
                 petition_info[key] = "Oracle R2"
-            if value == "DB2 HOST": 
+            elif petition_info[key] == "DB2 HOST": 
                 petition_info[key] = "DB2 Host"
-            if value == "TERADATA" or value == "teradata": 
+            elif petition_info[key] == "TERADATA" or petition_info[key] == "teradata": 
                 petition_info[key] = "Teradata"
-            if value == "MongoDB" or value == "MONGO DB" or value == "MongoDB": 
+            elif petition_info[key] == "MongoDB" or petition_info[key] == "MONGO DB" or petition_info[key] == "MongoDB" or petition_info[key] == "MONGODB": 
                 petition_info[key] = "Mongo DB"
-            if value == "POSTGRESS R2" or value == "POSTGRESS Physics" or value == "PosgreSQL": 
-                value = "PostgreSQL"
-        
-        if petition_info[key] == "geography": 
-            if value == "España-CIB" or "España/CIB": 
+            elif petition_info[key] == "POSTGRESS R2" or petition_info[key] == "POSTGRESS Physics" or petition_info[key] == "PosgreSQL": 
+                petition_info[key] = "PostgreSQL"
+            elif petition_info[key] == "NETEZZA": 
+                petition_info[key] = "Netezza"
+
+        if key == "geography": 
+            if petition_info[key] == "España-CIB" or petition_info[key] == "España/CIB": 
                 petition_info[key] = "CIB"
+
     ################################################################################
     try:
         ###########################################################################################################################
@@ -294,17 +257,7 @@ def insert_data(petition_info):
         cursor1.execute("SELECT petition_code FROM Peticion")
         petition_records = cursor1.fetchall()
         if not petition_info['petition_code'] in [record[0] for record in petition_records]:
-            cursor1.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #SQLite3
-
-        #cursor2.execute("SELECT petition_code FROM Peticion")
-        #petition_records = cursor1.fetchall()
-        #if not petition_info['petition_code'] in [record[0] for record in petition_records]:
-        #    cursor2.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #PostgreSQL localhost
-
-        #cursor3.execute("SELECT petition_code FROM Peticion")
-        #petition_records = cursor3.fetchall()
-        #if not petition_info['petition_code'] in [record[0] for record in petition_records]:
-        #    cursor3.execute("INSERT INTO Peticion (petition_code, DQDP_code, sdatool, feature, petition_arq, estado, fecha_in, fecha_out, duration_time, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['sdatool'], petition_info['feature'], petition_info['petition_arq'], petition_info['estado'], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #PostgreSQL Render
+            cursor1.execute("INSERT INTO Peticion (petition_code, DQDP_code, petition_arq, sdatool, feature, fecha_in, fecha_out, duration_time, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['DQDP_code'], petition_info['petition_arq'], petition_info['sdatool'], petition_info["feature"], petition_info['fecha_in'], petition_info['fecha_out'], petition_info['duration_time'], petition_info['description'], )) #SQLite3
 
         ###########################################################################################################################
         #If UUAA  already exists? Insert data into UUAA table
@@ -313,32 +266,12 @@ def insert_data(petition_info):
         if not petition_info['UUAA'] in [record[0] for record in uuaa_records]:
             cursor1.execute("INSERT INTO UUAA (UUAA) VALUES (?)", (petition_info['UUAA'], )) #SQLite3
 
-        #cursor2.execute("SELECT UUAA FROM UUAA")
-        #uuaa_records = cursor2.fetchall()
-        #if not petition_form['UUAA'] in [record[0] for record in uuaa_records]:
-        #    cursor2.execute("INSERT INTO UUAA (UUAA) VALUES (%s)", (petition_info['UUAA'], )) #PostgreSQL localhost
-
-        #cursor3.execute("SELECT UUAA FROM UUAA")
-        #uuaa_records = cursor3.fetchall()
-        #if not petition_info['UUAA'] in [record[0] for record in uuaa_records]:
-        #    cursor3.execute("INSERT INTO UUAA (UUAA) VALUES (%s)", (petition_info['UUAA'], )) #PostgreSQL Render
-
         ###########################################################################################################################
         #If geography already exists? Insert data into Geography table
         cursor1.execute("SELECT geography FROM Geography")
         geography_records = cursor1.fetchall()
         if not petition_info['geography'] in [record[0] for record in geography_records]:
             cursor1.execute("INSERT INTO Geography (geography) VALUES (?)", (petition_info['geography'], )) #SQLite3
-
-        #cursor2.execute("SELECT geography FROM Geography")
-        #geography_records = cursor2.fetchall()
-        #if not petition_form['geography'] in [record[0] for record in geography_records]:
-        #    cursor2.execute("INSERT INTO Geography (geography) VALUES (%s)", (petition_info['geography'], )) #PostgreSQL localhost
-
-        #cursor3.execute("SELECT geography FROM Geography")
-        #geography_records = cursor3.fetchall()
-        #if not petition_info['geography'] in [record[0] for record in geography_records]:
-        #    cursor3.execute("INSERT INTO Geography (geography) VALUES (%s)", (petition_info['geography'], )) #PostgreSQL Render
 
         ###########################################################################################################################
         #If DDBB already exists? Insert data into DDBB table
@@ -347,16 +280,6 @@ def insert_data(petition_info):
         if not petition_info['DDBB'] in [record[0] for record in ddbb_records]:
             cursor1.execute("INSERT INTO DDBB (DDBB) VALUES (?)", (petition_info['DDBB'], )) #SQLite3
 
-        #cursor2.execute("SELECT DDBB FROM DDBB")
-        #ddbb_records = cursor2.fetchall()
-        #if not petition_form['DDBB'] in [record[0] for record in ddbb_records]:
-        #    cursor2.execute("INSERT INTO DDBB (DDBB) VALUES (%s)", (petition_info['DDBB'], )) #PostgreSQL localhost
-
-        #cursor3.execute("SELECT DDBB FROM DDBB")
-        #ddbb_records = cursor3.fetchall()
-        #if not petition_info['DDBB'] in [record[0] for record in ddbb_records]:
-        #    cursor3.execute("INSERT INTO DDBB (DDBB) VALUES (%s)", (petition_info['DDBB'], )) #PostgreSQL Render
-
         ###########################################################################################################################      
         #If UUAA, geography_id, dev_master already exists? Insert data into Power_Design table
         cursor1.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
@@ -364,37 +287,15 @@ def insert_data(petition_info):
         if not [petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master']] in [record[0] for record in pwd_records]:
             cursor1.execute("INSERT INTO Power_Design (UUAA, geography, DDBB, dev_master, version, version_date, description) VALUES (?, ?, ?, ?, ?, ?, ?)", (petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['version_date'], petition_info['description'], )) #SQLite3
 
-        #cursor2.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
-        #pwd_records = cursor2.fetchall()
-        #if not [petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master']] in [record for record in pwd_records]:
-        #    cursor2.execute("INSERT INTO Power_Design (UUAA, geography, DDBB, dev_master, version, version_date, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['UUAA'], petition_info['Geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['version_date'], petition_info['description'], )) #PostgreSQL localhost
-
-        #cursor3.execute("SELECT UUAA, geography, DDBB, dev_master FROM Power_Design")
-        #pwd_records = cursor3.fetchall()
-        #if not [petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master']] in [record[0] for record in pwd_records]:
-        #    cursor3.execute("INSERT INTO Power_Design (UUAA, geography, DDBB, dev_master, version, version_date, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['version_date'], petition_info['description'], )) #PostgreSQL Render
-
         ###########################################################################################################################
         #If petition_code, UUAA, geography_id, dev_master already exists? Insert data into Peticion_PWD table
         cursor1.execute("SELECT petition_code, UUAA, geography, DDBB, dev_master FROM Peticion_PWD")
         pwd_records = cursor1.fetchall()
         if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
             cursor1.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, DDBB, dev_master, version, description) VALUES (?, ?, ?, ?, ?, ?, ?)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #SQLite3
-
-        #cursor2.execute("SELECT petition_code, UUAA, geography, DDBB, dev_master FROM Peticion_PWD")
-        #pwd_records = cursor2.fetchall()
-        #if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
-        #    cursor2.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, dev_master, version, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['Geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #PostgreSQL localhost
-
-        #cursor3.execute("SELECT petition_code, UUAA, geography, DDBB, dev_master FROM Peticion_PWD")
-        #pwd_records = cursor3.fetchall()
-        #if not [petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version']] in [record[0] for record in pwd_records]:
-        #    cursor3.execute("INSERT INTO Peticion_PWD (petition_code, UUAA, geography, DDBB, dev_master, version, description) VALUES (%s, %s, %s, %s, %s, %s, %s)", (petition_info['petition_code'], petition_info['UUAA'], petition_info['geography'], petition_info['DDBB'], petition_info['dev_master'], petition_info['version'], petition_info['description'], )) #PostgreSQL Render
     
         #Confirm the transaction
         conn1.commit()
-        #conn2.commit()
-        #conn3.commit()
 
     finally:
         ########################
@@ -402,21 +303,49 @@ def insert_data(petition_info):
             cursor1.close()
         if conn1:
             conn1.close()
+    
+    
+    if st.runtime.exists(): 
+        ##########################################################################################################################################
+        ######################################################## PETITION EXCEL ##################################################################
+        # Email service account that need to share the google sheet
+        #email that need to share the google sheet = matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
+        service_account_email = "matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com"
 
-        ########################
-        '''
-        if cursor2:
-            cursor2.close()
-        if conn2:
-            conn2.close()
-        '''
+        scope = [
+            'https://spreadsheets.google.com/feeds', 
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive'
+            ]
 
-        ########################
-        '''
-        if cursor3:
-            cursor3.close()
-        if conn3:
-            conn3.close()
-        '''
+        credentials = "credentials.json"
+
+        #Cargar credenciales
+        creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
+
+        #Autorizar gspread con las credenciales
+        client = gspread.authorize(creds)
+
+        # ID de la hoja de cálculo 
+        srpeadsheet_id = "1biaKHw0fV5w5HBWsAto2Q-WCLkXe4bwc72hoS6BNDe8" #petitions file
+
+        # Open the Google Sheet file by ID
+        spreadsheet = client.open_by_key(srpeadsheet_id)
+
+        # Select worksheet
+        worksheet = spreadsheet.worksheet('All petitions')
+
+        # If petition of the new row already exist on worksheet? add or not
+        pcode_values = worksheet.col_values(15)
+        if petition_info["petition_code"] not in pcode_values: 
+            #new row 
+            new_row = []
+            column_names = worksheet.row_values(1)
+            for column_name in column_names: 
+                new_row.append(petition_info.get(column_name, None)) 
+            worksheet.append_row(new_row)
+        else: 
+            print("Petition", petition_info["petition_code"], "already exist on petitions excel")
         
-        ########################
+
+
