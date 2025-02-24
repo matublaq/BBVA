@@ -101,8 +101,10 @@ if True: # Información desde hoja de calculo de google con todas las peticiones
         'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/drive'
         ]
-
-    credentials = "credentials.json"
+        
+    #credentials = "credentials.json" #Las credenciales están en gitignore, por eso uso secrets
+    credentials_json = st.secrets["GOOGLE_CREDENTIALS"]
+    credentials_dict = json.loads(credentials_json)
 
     creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
     client = gspread.authorize(creds)
