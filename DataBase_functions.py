@@ -84,7 +84,7 @@ def create_database():
             UUAA VARCHAR(4),
             geography VARCHAR(32),
             DDBB VARCHAR(32),
-            dev_master VARCHAR(10) CHECK (dev_master IN ('Dev', 'Master', 'None')),
+            dev_master VARCHAR(10),
             version VARCHAR(64),
             version_date DATE,
             description VARCHAR(255),
@@ -103,7 +103,7 @@ def create_database():
             UUAA VARCHAR(4),
             geography VARCHAR(32),
             DDBB VARCHAR(32),
-            dev_master VARCHAR(10) CHECK (dev_master IN ('Dev', 'Master', 'None')),
+            dev_master VARCHAR(10),
             version VARCHAR(64),
             description VARCHAR(255),
             PRIMARY KEY (petition_code, UUAA, geography, DDBB, dev_master),
@@ -148,67 +148,79 @@ def insert_data(petition_info):
     ################################################################################
     #Data validation
     if "petition_code" in petition_info: 
-        petition_info["petition_code"] = petition_info["petition_code"].strip().upper()
+        petition_info["petition_code"] = ("None" if petition_info["petition_code"] is None else petition_info["petition_code"].strip().upper())
     else: 
         petition_info["petition_code"] = "None"
 
     if "DQDP_code" in petition_info: 
-        petition_info["DQDP_code"] = petition_info["DQDP_code"].strip().upper()
+        petition_info["DQDP_code"] = ("None" if petition_info["DQDP_code"] is None else petition_info["DQDP_code"].strip().upper())
     else: 
         petition_info["DQDP_code"] = "None"
 
     if "sdatool" in petition_info: 
-        petition_info["sdatool"] = petition_info["sdatool"].strip().upper()
+        petition_info["sdatool"] = ("None" if petition_info["sdatool"] is None else petition_info["sdatool"].strip().upper())
     else: 
         petition_info["sdatool"] = "None"
     
     if "feature" in petition_info: 
-        petition_info["feature"] = petition_info["feature"].strip().upper()
+        petition_info["feature"] = ("None" if petition_info["feature"] is None else petition_info["feature"].strip().upper())
     else: 
         petition_info["feature"] = "None"
     
     if "UUAA" in petition_info: 
-        petition_info["UUAA"] = petition_info["UUAA"].strip().upper()
+        petition_info["UUAA"] = ("None" if petition_info["UUAA"] is None else petition_info["UUAA"].strip().upper())
     else: 
         petition_info["UUAA"] = "None"
     
     if "geography" in petition_info: 
-        petition_info["geography"] = petition_info["geography"].strip()
+        petition_info["geography"] = ("None" if petition_info["geography"] is None else petition_info["geography"].strip().upper())
     else: 
         petition_info["geography"] = "None"
 
     if "DDBB" in petition_info: 
-        petition_info["DDBB"] = petition_info["DDBB"].strip()
+        petition_info["DDBB"] = ("None" if petition_info["DDBB"] is None else petition_info["DDBB"].strip().upper())
     else: 
         petition_info["DDBB"] = "None"
 
     if "dev_master" in petition_info: 
-        petition_info["dev_master"] = petition_info["dev_master"].strip().capitalize()
+        petition_info["dev_master"] = ("None" if petition_info["dev_master"] is None else petition_info["dev_master"].strip().upper())
     else: 
         petition_info["dev_master"] = "None"
     
     if "version" in petition_info: 
-        petition_info["version"] = petition_info["version"].strip()
+        petition_info["version"] = ("None" if petition_info["version"] is None else petition_info["version"].strip().upper())
     else: 
         petition_info["version"] = "None"
 
     if "petition_arq" in petition_info: 
-        petition_info["petition_arq"] = petition_info["petition_arq"].strip().upper()
+        petition_info["petition_arq"] = ("None" if petition_info["petition_arq"] is None else petition_info["petition_arq"].strip().upper())
     else: 
         petition_info["petition_arq"] = "None"
 
     if "version_date" in petition_info: 
-        petition_info["version_date"] = petition_info["version_date"].strip()
+        try: 
+            petition_info["version_date"] = ("None" if petition_info["version_date"] is None else petition_info["version_date"].strftime("%d/%m/%Y"))
+            petition_info["version_date"] = petition_info["version_date"].strip()
+        except (ValueError, AttributeError): 
+            petition_info["version_date"] = petition_info["version_date"].strip()
     else: 
         petition_info["version_date"] = "None"
     
     if "fecha_in" in petition_info: 
-        petition_info["fecha_in"] = petition_info["fecha_in"].strip()
+        try: 
+            petition_info["fecha_in"] = ("None" if petition_info["fecha_in"] is None else petition_info["fecha_in"].strftime("%d/%m/%Y"))
+            petition_info["fecha_in"] = petition_info["fecha_in"].strip()
+        except (ValueError, AttributeError):
+            petition_info["fecha_in"] = petition_info["fecha_in"].strip()
     else: 
         petition_info["fecha_in"] = "None"
     
     if "fecha_out" in petition_info: 
-        petition_info["fecha_out"] = petition_info["fecha_out"].strip()
+        try: 
+            petition_info["fecha_out"] = ("None" if petition_info["fecha_out"] is None else petition_info["fecha_out"].strftime("%d/%m/%Y"))
+            petition_info["fecha_out"] = petition_info["fecha_out"].strip()
+        except (ValueError, AttributeError):
+            petition_info["fecha_out"] = petition_info["fecha_out"].strip()
     else: 
         petition_info["fecha_out"] = "None"
 
@@ -219,7 +231,7 @@ def insert_data(petition_info):
         petition_info["version_date"] = "None"
     
     if "description" in petition_info: 
-        petition_info["description"] = petition_info["description"].strip().capitalize()
+        petition_info["description"] = ("None" if petition_info["description"] is None else petition_info["description"].strip().capitalize())
     else: 
         petition_info["description"] = "None"
 
@@ -296,6 +308,8 @@ def insert_data(petition_info):
     
         #Confirm the transaction
         conn1.commit()
+    except: 
+        pass
 
     finally:
         ########################
@@ -322,7 +336,7 @@ def insert_data(petition_info):
 
         #Cargar credenciales
         creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
-
+        
         #Autorizar gspread con las credenciales
         client = gspread.authorize(creds)
 
@@ -335,17 +349,26 @@ def insert_data(petition_info):
         # Select worksheet
         worksheet = spreadsheet.worksheet('All petitions')
 
-        # If petition of the new row already exist on worksheet? add or not
-        pcode_values = worksheet.col_values(15)
-        if petition_info["petition_code"] not in pcode_values: 
-            #new row 
+        # Get all values from the worksheet
+        data = worksheet.get_all_values()
+        
+        # Conver to dataframe from pandas
+        headers = data[0]
+        values = data[1:]
+        df_petitions = pd.DataFrame(values, columns=headers)
+
+        ##########################################################################################
+        ################# Se agrega o actualiza la información en petition file ##################
+        if petition_info["petition_code"] not in df_petitions["petition_code"].values: 
             new_row = []
             column_names = worksheet.row_values(1)
             for column_name in column_names: 
                 new_row.append(petition_info.get(column_name, None)) 
             worksheet.append_row(new_row)
-        else: 
-            print("Petition", petition_info["petition_code"], "already exist on petitions excel")
-        
+        else:             
+            for key in petition_info.keys():
+                df_petitions[df_petitions["petition_code"] == petition_info["petition_code"]][key] = petition_info[key]
+                set_with_dataframe(worksheet, df_petitions)
 
-
+            print("Petition", petition_info["petition_code"], "has been updated.")
+    return "Done"

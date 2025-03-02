@@ -102,9 +102,12 @@ if True: # Información desde hoja de calculo de google con todas las peticiones
         'https://www.googleapis.com/auth/drive'
         ]
         
-    #credentials = "credentials.json" #Las credenciales están en gitignore, por eso uso secrets
-    credentials = st.secrets["GOOGLE_CREDENTIALS"]
-    credentials_dict = json.loads(credentials)
+    #Ejecutando desde el localhost    
+    credentials = "credentials.json"
+
+    #Ejecutando desde el streamlit cloud
+    #credentials = st.secrets["GOOGLE_CREDENTIALS"] #Las credenciales están en gitignore, por eso uso secrets
+    #credentials_dict = json.loads(credentials)
 
     creds = ServiceAccountCredentials.from_json_keyfile_name(credentials, scope)
     client = gspread.authorize(creds)
@@ -139,15 +142,22 @@ if True: # Información desde hoja de calculo de google con todas las peticiones
         all_dev_master = df_petitions[(df_petitions["UUAA"] == uuaa_selected) & (df_petitions["geography"] == geography_selected) & (df_petitions["DDBB"] == ddbb_selected)]["dev_master"]
         dev_master_selected = st.selectbox("dev_master: ", all_dev_master.unique())
         st.write(dev_master_selected)
+    
+    # Ajustamos las fechas al formato necesario para streamlit
+    df_petitions["fecha_in"] = df_petitions["fecha_in"].replace([None, "None"], np.nan)
+    df_petitions["fecha_in"] = pd.to_datetime(df_petitions["fecha_in"], format='%d/%m/%Y', errors='coerce')
+    df_petitions["fecha_in"] = df_petitions["fecha_in"].dt.strftime('%Y/%m/%d')
+
+    df_petitions["fecha_out"] = df_petitions["fecha_out"].replace([None, "None"], np.nan)
+    df_petitions["fecha_out"] = pd.to_datetime(df_petitions["fecha_out"], format='%d/%m/%Y', errors='coerce')
+    df_petitions["fecha_out"] = df_petitions["fecha_out"].dt.strftime('%Y/%m/%d')
+
+    df_petitions["version_date"] = df_petitions["version_date"].replace([None, "None"], np.nan)
+    df_petitions["version_date"] = pd.to_datetime(df_petitions["version_date"], format='%d/%m/%Y', errors='coerce')
+    df_petitions["version_date"] = df_petitions["version_date"].dt.strftime('%Y/%m/%d')
+
     df_petitions = df_petitions.sort_values(by=['fecha_out', 'DQDP_code'], ascending=[False, False])
     st.dataframe(df_petitions[(df_petitions["UUAA"] == uuaa_selected) & (df_petitions["geography"] == geography_selected) & (df_petitions["DDBB"] == ddbb_selected) & (df_petitions["dev_master"] == dev_master_selected)][["fecha_in", "fecha_out", "DQDP_code", "version_date", "version", "petition_code", "description", "duration_time"]])
-
-###################################################################################################################################
-########################################################## Actualizar #############################################################
-st.markdown('---')
-st.markdown("<h1 style='font-size: 20px; text-align: left; color: #E5E1DA'>Actualizar</p>", unsafe_allow_html=True)
-
-
 
 ###################################################################################################################################
 ########################################################## Petición ###############################################################
@@ -188,35 +198,14 @@ with st.form(key='petition_info'):
             version = st.text_input('Version + desc (CHAR 64). Ej: v1 dev + Posible master v1')
     descripcion = st.text_area('Descripción')
         
-
-    
-
     # Botón para enviar el formulario
     submit_button = st.form_submit_button(label='Enviar')
 
 # Procesar los datos del formulario
 if submit_button:
-    st.write('Petition Code:', petition_code.strip().upper())
-    st.write('DQDP Code:', DQDP_code.strip().upper())
-    st.write('SDA Tool:', sdatool.strip().upper())
-    st.write('Feature:', feature.strip().upper())
-    st.write('UUAA:', UUAA.strip().upper())
-    st.write('Geography:', geography)
-    st.write('DDBB:', DDBB)
-    st.write('Dev Master:', dev_master)
-    st.write('Version:', version)
-    st.write('Petition ARQ:', petition_arq.strip().upper())
-    st.write('Version date:', version_date)
-    st.write('Fecha In:', fecha_in)
-    st.write('Fecha Out:', fecha_out)
-    st.write('Time Duration:', duration_time)
-    st.write('Descripción:', descripcion)
-
     petition_info = {
         'petition_code': petition_code.strip().upper() if petition_code else None, #manejar valores vacíos
         'DQDP_code': DQDP_code.strip().upper() if DQDP_code else None,
-        'sdatool': sdatool.strip().upper() if sdatool else None,
-        'feature': feature.strip().upper() if feature else None,
         'UUAA': UUAA.strip().upper() if UUAA else None,
         'geography': geography,
         'DDBB': DDBB,
@@ -229,5 +218,20 @@ if submit_button:
         'duration_time': duration_time,
         'description': descripcion
     }
+
+    st.write('Petition Code:', petition_code)
+    st.write('DQDP Code:', DQDP_code)
+    st.write('UUAA:', UUAA)
+    st.write('Geography:', geography)
+    st.write('DDBB:', DDBB)
+    st.write('Dev Master:', dev_master)
+    st.write('Version:', version)
+    st.write('Petition ARQ:', petition_arq)
+    st.write('Version date:', version_date)
+    st.write('Fecha In:', fecha_in)
+    st.write('Fecha Out:', fecha_out)
+    st.write('Time Duration:', duration_time)
+    st.write('Descripción:', descripcion)
     
-    insert_data_testing(petition_info)
+
+    insert_data(petition_info)
