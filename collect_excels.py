@@ -5,7 +5,7 @@
 
 
 #%load_ext autoreload
-#get_ipython().run_line_magic('autoreload', '2')
+get_ipython().run_line_magic('autoreload', '2')
 
 import sqlite3
 import psycopg2
@@ -30,7 +30,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 # <p style="font-size: 25px; color: #208ee5">Registro actividad todos</p>
 
-# In[6]:
+# In[ ]:
 
 
 # Email service account that need to share the google sheet: matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
@@ -54,7 +54,7 @@ try:
     client = gspread.authorize(creds)
 
     # ID de la hoja de cálculo 
-    spreadsheet_id = ["1DrCGoX0FBbtip5Xv-ozi-XDgwcMdUuvDeZbzOan11hw", "1mUJAhezlVOj2TVWBs3loo8C91aDWzqaYjboDysidpO0"] #[2025, 2024]  
+    spreadsheet_id = ["10xSx1D3OBedleVD2xf-18EZye-xPZKox95C4S9r-UHg", "1mUJAhezlVOj2TVWBs3loo8C91aDWzqaYjboDysidpO0"] #[2025, 2024]  
 
     #Dataframe con los datos de todos los meses
     headers = ["Fecha de alta", "Fecha incurrida", "Fecha de fin", "UUAA", "Código", "SDATOOL", "Feature", "Petición", "Geografía", "Gestor BBDD", "Ámbito", "Responsable", "Validada", "Horas", "Comentarios"]
