@@ -5,7 +5,7 @@
 
 
 #%load_ext autoreload
-#get_ipython().run_line_magic('autoreload', '2')
+get_ipython().run_line_magic('autoreload', '2')
 
 import sqlite3
 import psycopg2
@@ -54,7 +54,7 @@ try:
     client = gspread.authorize(creds)
 
     # ID de la hoja de cálculo 
-    spreadsheet_id = ["10xSx1D3OBedleVD2xf-18EZye-xPZKox95C4S9r-UHg", "1mUJAhezlVOj2TVWBs3loo8C91aDWzqaYjboDysidpO0"] #[2025, 2024]  
+    spreadsheet_id = ["1X6Mto2NH8iqmhV0LBkQJvBAZUG_Uvcj6PkCFN1s_xa0", "1mUJAhezlVOj2TVWBs3loo8C91aDWzqaYjboDysidpO0"] #[2025, 2024]  
 
     #Dataframe con los datos de todos los meses
     headers = ["Fecha de alta", "Fecha incurrida", "Fecha de fin", "UUAA", "Código", "SDATOOL", "Feature", "Petición", "Geografía", "Gestor BBDD", "Ámbito", "Responsable", "Validada", "Horas", "Comentarios"]
@@ -119,7 +119,7 @@ print(df_rat, "\n", df_rat.columns)
 
 # <p style="font-size: 25px; color: #208cc5;;">Oracle Physics, Elastic Search, Mongo DB</p>
 
-# In[7]:
+# In[ ]:
 
 
 # Email service account that need to share the google sheet
@@ -143,10 +143,10 @@ try:
 
     # ID de la hoja de cálculo. #Oracle Physics, Elastic Search, Mongo DB v1, Mongo DB v2 
     spreadsheet_id = [
-        "1CZPTM1Md4eBOaUkSC75NRtXLIQKlL_BfwuErT-RCgAo", # Oracle Physics
-        "1IZDd6UsmPZmDPEu-flhFhHqJngVWfqJEuY0kwaIQY3A", # Elastic Search
-        "1lt48N02ul6qhdmFM4WWeUOXkU749o0JTWPf-V8zuaU4", # Mongo DB v1
-        "1udBoqGa9Dc-FtRwFtzwQEEDFpKYrlc9QEa8I723G1Vg"  # Mongo DB v2
+        "1cjUK1zR2pFzN7ev81AYrX9-Mc7x6haKEhfCQooeXAvM", # Oracle Physics
+        "1Ax-27CgcSSjFdwy2JYZDn2DDksRb9VdJ2V5bzmIICt0", # Elastic Search
+        "1xA2c48-yER2ltpg_6_aIG3pkrM389nFTgrpiCRCeQYI", # Mongo DB v1
+        "18JsNWwD4HC9LBi7cga9uC1IleJG1ElgLIC1eK-NBHbk"  # Mongo DB v2
     ] 
 
     #DataFrame con los datos del excel
