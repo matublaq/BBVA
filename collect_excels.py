@@ -5,7 +5,7 @@
 
 
 #%load_ext autoreload
-get_ipython().run_line_magic('autoreload', '2')
+#get_ipython().run_line_magic('autoreload', '2')
 
 import sqlite3
 import psycopg2
