@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
+# In[33]:
 
 
 #%load_ext autoreload
@@ -30,7 +30,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 # <p style="font-size: 25px; color: #208ee5">Registro actividad todos</p>
 
-# In[ ]:
+# In[34]:
 
 
 # Email service account that need to share the google sheet: matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
@@ -54,7 +54,7 @@ try:
     client = gspread.authorize(creds)
 
     # ID de la hoja de cálculo 
-    spreadsheet_id = ["1X6Mto2NH8iqmhV0LBkQJvBAZUG_Uvcj6PkCFN1s_xa0", "1mUJAhezlVOj2TVWBs3loo8C91aDWzqaYjboDysidpO0"] #[2025, 2024]  
+    spreadsheet_id = ["1AW8fiCSSOSJHnnK9vEpZ28KqjHfom4YoYc3wlwzmJdY", "1mUJAhezlVOj2TVWBs3loo8C91aDWzqaYjboDysidpO0"] #[2025, 2024]  
 
     #Dataframe con los datos de todos los meses
     headers = ["Fecha de alta", "Fecha incurrida", "Fecha de fin", "UUAA", "Código", "SDATOOL", "Feature", "Petición", "Geografía", "Gestor BBDD", "Ámbito", "Responsable", "Validada", "Horas", "Comentarios"]
@@ -114,6 +114,15 @@ except Exception as e:
 
 print(df_rat, "\n", df_rat.columns)
 
+######################################################################################################################################
+agg_dict = {
+    col: 'first' for col in df_rat.columns if col not in ["description", "duration_time"]
+}
+agg_dict['description'] = lambda x: "\n".join(x.astype(str))
+agg_dict["duration_time"] = 'sum'
+
+df_rat = df_rat.groupby("petition_code", as_index=False).agg(agg_dict)
+
 
 # <p style="font-size: 35px; color: #208ee5;">Peticiones globales Oracle, Elastic Search y Mongo DB</p>
 
@@ -143,10 +152,10 @@ try:
 
     # ID de la hoja de cálculo. #Oracle Physics, Elastic Search, Mongo DB v1, Mongo DB v2 
     spreadsheet_id = [
-        "1cjUK1zR2pFzN7ev81AYrX9-Mc7x6haKEhfCQooeXAvM", # Oracle Physics
-        "1Ax-27CgcSSjFdwy2JYZDn2DDksRb9VdJ2V5bzmIICt0", # Elastic Search
-        "1xA2c48-yER2ltpg_6_aIG3pkrM389nFTgrpiCRCeQYI", # Mongo DB v1
-        "18JsNWwD4HC9LBi7cga9uC1IleJG1ElgLIC1eK-NBHbk"  # Mongo DB v2
+        "12JqmcvSsg834go36_xul499-JX0RD5SinkY6kz9Ed4Q", # Oracle Physics
+        "13gqE6OLwdRjWJsUDJ2Xko0OzwclvF8lAZAkWXXKbx1s", # Elastic Search
+        "1-DNfadFUZgsJDfcYG_orSQZ_2owanEOn6WOJp6sC2tg", # Mongo DB v1
+        "1L7Gbr_NNe04ZiELHUG4iz7L9TETFAzVXg_xcXGfPx2U"  # Mongo DB v2
     ] 
 
     #DataFrame con los datos del excel
@@ -161,30 +170,35 @@ try:
         print(f"Available sheeds: {[sheet.title for sheet in sheets]}")
 
         for sheet in sheets: 
-            try: 
-                print(sheet.title)
-                sheet.update(values=[headers], range_name='A1') #Nombrando las columnas
+            success = False
+            while not success: 
+                try: 
+                    print(sheet.title)
+                    sheet.update(values=[headers], range_name='A1') #Nombrando las columnas
 
-                df_aux = pd.DataFrame(sheet.get_all_records(expected_headers=headers))
-                df_globales = pd.concat([df_globales, df_aux], ignore_index=True)
-                print(df_globales.columns)
-                #Poniendo el DDBB correspondiente
-                if i == spreadsheet_id[0]: 
-                    df_globales["DDBB"] = "Oracle Physics"
-                elif i == spreadsheet_id[1]: 
-                    df_globales.loc[df_globales["DDBB"] != "Oracle Physics", "DDBB"] = "Elastic Search"
-                elif i == spreadsheet_id[2] or i == spreadsheet_id[3]: 
-                    df_globales.loc[(df_globales["DDBB"] != "Oracle Physics") & (df_globales["DDBB"] != "Elastic Search"), "DDBB"] = "Mongo DB"
-                else: 
-                    print("Fuera de rango spreadsheet_id")
+                    df_aux = pd.DataFrame(sheet.get_all_records(expected_headers=headers))
+                    df_globales = pd.concat([df_globales, df_aux], ignore_index=True)
+                    
+                    #Poniendo el DDBB correspondiente
+                    if i == spreadsheet_id[0]: 
+                        df_globales["DDBB"] = "Oracle Physics"
+                    elif i == spreadsheet_id[1]: 
+                        df_globales.loc[df_globales["DDBB"] != "Oracle Physics", "DDBB"] = "Elastic Search"
+                    elif i == spreadsheet_id[2] or i == spreadsheet_id[3]: 
+                        df_globales.loc[(df_globales["DDBB"] != "Oracle Physics") & (df_globales["DDBB"] != "Elastic Search"), "DDBB"] = "Mongo DB"
+                    else: 
+                        print("Fuera de rango spreadsheet_id")
+                    success = True
+                    print("Success")
 
-            except gspread.exceptions.APIError as e:
-                if e.response.status_code == 429: 
-                    wait_time = 6
-                    print(f"Quota exceeded. Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
-                else: 
-                    pass
+                except gspread.exceptions.APIError as e:
+                    if e.response.status_code == 429: 
+                        wait_time = 6
+                        print(f"Quota exceeded. Retrying in {wait_time} seconds...")
+                        time.sleep(wait_time)
+                    else: 
+                        print(f"APIError: {e}")
+                        break # Exit of the while loop if it's not a quota error
             
     #Creating DDBB and geography column
     df_globales["geography"] = "Global"
@@ -214,7 +228,7 @@ print(df_globales.columns, df_globales.shape)
 
 # <p style="font-size: 35px; color: #208ee5;">dqdp_portal CSV</p>
 
-# In[8]:
+# In[36]:
 
 
 # Email service account that need to share the google sheet
@@ -266,12 +280,12 @@ for file in files:
             dfs.append(df_aux)
         except Exception as e:
             print(f"Error al leer el archivo {file['name']}: {e}")
-
-# Combina todos los DataFrames en uno solo
+    
+#Combina todos los DataFrames en uno solo
 df_csv_combined = pd.concat(dfs, ignore_index=True)
 
 
-# In[9]:
+# In[ ]:
 
 
 print(df_csv_combined.columns)
@@ -284,14 +298,14 @@ df_csv_combined.columns
 
 # <p style="font-size: 35px; color: #20cff5; text-align: center;">All in one Data Frame</p>
 
-# In[10]:
+# In[ ]:
 
 
 print("Data-frame from CSV files: ", df_csv_combined.columns, "\n", "Data-frame from Registro Actividad Todos: ", df_rat.columns, "\n", "Data-frame from Globales: ", df_globales.columns)
 print(set(df_csv_combined.columns) & set(df_rat.columns) & set(df_globales.columns))
 
 
-# In[11]:
+# In[ ]:
 
 
 #Creating global data-frame
@@ -320,7 +334,28 @@ for row in df_combined.iterrows():
                 df_combined.at[row[0], key] = "None"
 
 
+# Función personalizada de agregación
+def custom_agg(series): 
+    if any(series.index.isin(df_rat.index)): # Check if any of the series comes from df_rat
+        return series[series.index.isin(df_rat.index)].iloc[0] # Return the first value from df_rat
+    else: 
+        return series.iloc[0] # Return the first value from other sources
 
+agg_dict = {
+    col: custom_agg for col in ["geography", "DDBB"]
+}
+agg_dict["duration_time"] = lambda x: x[x.index.isin(df_rat.index)].sum() if any(x.index.isin(df_rat.index)) else x.sum()
+agg_dict["description"] = lambda x: "\n".join(x.astype(str))
+
+# Agregación por 'petition_code'
+for col in df_combined.columns:
+    if col not in agg_dict: # Si la columna no está en agg_dict, se agrega como 'first'
+        agg_dict[col] = 'first'
+
+final_df = df_combined.groupby("petition_code", as_index=False).agg(agg_dict)
+print(final_df)
+
+'''
 df_combined = df_combined[df_combined["petition_code"] != "None"]
 
 agg_dict = {
@@ -332,11 +367,12 @@ agg_dict["duration_time"] = 'sum'
 #Data frame final a partir del campo 'poetition_code'
 #df_g.drop_duplicates(subset=["petition_code"], keep="first", inplace=True) #Método 1
 final_df = df_combined.groupby("petition_code", as_index=False).agg(agg_dict) #Método 2
+'''
 
 
 # <p>Nan counting</p>
 
-# In[12]:
+# In[ ]:
 
 
 petitions = set(final_df["petition_code"])
@@ -386,7 +422,7 @@ df_none_count
 
 # <p style="font-size: 45px; text-align: center; color: green;">Cleaning definitive dataframe</p>
 
-# In[13]:
+# In[ ]:
 
 
 print(final_df["geography"].unique())
@@ -395,7 +431,7 @@ print(final_df["DDBB"].unique())
 print(final_df.columns)
 
 
-# In[14]:
+# In[ ]:
 
 
 final_df["DDBB"] = final_df["DDBB"].replace(["DB2 HOST"], "DB2 Host")
@@ -411,7 +447,7 @@ final_df["geography"] = final_df["geography"].replace(["España/CIB", "España-C
 final_df["geography"] = final_df["geography"].replace(["España "], "España")
 
 
-# In[15]:
+# In[ ]:
 
 
 final_df["fecha_in"] = final_df["fecha_in"].astype(str)
@@ -437,7 +473,7 @@ final_df["duration_time"] = pd.to_numeric(final_df["duration_time"], errors="coe
 
 # <p style="font-size: 25px; color: #00d17f;">Actualizar y guardar</p>
 
-# In[16]:
+# In[ ]:
 
 
 #Actualizar y guardar
@@ -476,7 +512,7 @@ set_with_dataframe(worksheet, final_df, include_index=False, include_column_head
 final_df.to_excel("petitions.xlsx", index=False, sheet_name="All petitions")
 
 
-# In[17]:
+# In[ ]:
 
 
 final_df.columns
@@ -485,7 +521,7 @@ final_df.columns
 # ---
 # ---
 
-# In[18]:
+# In[ ]:
 
 
 for row in final_df.iterrows():
@@ -502,7 +538,7 @@ for row in final_df.iterrows():
 
 # <p style="font-size: 40px; color: grey;">Testing</p>
 
-# In[19]:
+# In[ ]:
 
 
 conn1 = sqlite3.connect("BBVA.db")
@@ -519,7 +555,7 @@ cursor1.close()
 conn1.close()
 
 
-# In[20]:
+# In[ ]:
 
 
 '''
@@ -542,7 +578,7 @@ conn3.close()
 '''
 
 
-# In[21]:
+# In[ ]:
 
 
 print(len(all_uuaa))
