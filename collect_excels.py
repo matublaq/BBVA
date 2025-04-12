@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[33]:
+# In[1]:
 
 
 #%load_ext autoreload
@@ -30,7 +30,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 # <p style="font-size: 25px; color: #208ee5">Registro actividad todos</p>
 
-# In[34]:
+# In[ ]:
 
 
 # Email service account that need to share the google sheet: matiasblaquier@theta-voyager-406314.iam.gserviceaccount.com
@@ -228,7 +228,7 @@ print(df_globales.columns, df_globales.shape)
 
 # <p style="font-size: 35px; color: #208ee5;">dqdp_portal CSV</p>
 
-# In[36]:
+# In[ ]:
 
 
 # Email service account that need to share the google sheet
@@ -462,6 +462,7 @@ final_df["geography"] = final_df["geography"].astype(str)
 final_df["DDBB"] = final_df["DDBB"].astype(str)
 final_df["responsable"] = final_df["responsable"].astype(str)
 final_df["version"] = final_df["version"].astype(str)
+final_df["validadd"] = final_df["validada"].astype(str)
 final_df["petition_arq"] = final_df["petition_arq"].astype(str)
 final_df["dev_master"] = final_df["dev_master"].astype(str)
 final_df["path"] = final_df["dev_master"].astype(str)
